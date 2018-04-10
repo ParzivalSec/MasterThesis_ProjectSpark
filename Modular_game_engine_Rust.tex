@@ -1,0 +1,266 @@
+% Custom MA template for Rust - Modular game engine
+% !TEX encoding = UTF-8 Unicode
+
+% FHTW document class for cooperate identity master thesises
+\documentclass[MGS, Master, english]{twbook}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Define the standard for citations for this paper - IEEE or HARVARD
+\newcommand{\FHTWCitationType}{IEEE} 
+\ifthenelse{\equal{\FHTWCitationType}{HARVARD}}{\usepackage{harvard}}{\usepackage{bibgerm}}
+
+% Format code listings
+\usepackage[final]{listings}
+\lstset{captionpos=b, numberbychapter=false,caption=\lstname,frame=single, numbers=left, stepnumber=1, numbersep=2pt, xleftmargin=15pt, framexleftmargin=15pt, numberstyle=\tiny, tabsize=3, columns=fixed, basicstyle={\fontfamily{pcr}\selectfont\footnotesize}, keywordstyle=\bfseries, commentstyle={\color[gray]{0.33}\itshape}, stringstyle=\color[gray]{0.25}, breaklines, breakatwhitespace, breakautoindent}
+\lstloadlanguages{[ANSI]C, C++, [gnu]make, gnuplot, Matlab}
+
+% -----------------------------------------
+% Format the list of code
+\makeatletter
+% Setzen der Bezeichnungen für das Quellcodeverzeichnis/Abkürzungsverzeichnis in Abhängigkeit von der eingestellten Sprache
+\providecommand\listacroname{}
+\@ifclasswith{twbook}{english}
+{%
+	\renewcommand\lstlistingname{Code}
+	\renewcommand\lstlistlistingname{List of Code}
+	\renewcommand\listacroname{List of Abbreviations}
+}{%
+	\renewcommand\lstlistingname{Quellcode}
+	\renewcommand\lstlistlistingname{Quellcodeverzeichnis}
+	\renewcommand\listacroname{Abkürzungsverzeichnis}
+}
+% Wenn die Option listof=entryprefix gewählt wurde, Definition des Entyprefixes für das Quellcodeverzeichnis. Definition des Macros listoflolentryname analog zu listoflofentryname und listoflotentryname der KOMA-Klasse
+\@ifclasswith{scrbook}{listof=entryprefix}
+{%
+	\newcommand\listoflolentryname\lstlistingname
+}{%
+}
+\makeatother
+\newcommand{\listofcode}{\phantomsection\lstlistoflistings}
+
+% Die nachfolgenden Pakete stellen sonst nicht benötigte Features zur Verfügung
+\usepackage{blindtext}
+
+% -----------------------------------------
+%
+% Einträge für Deckblatt, Kurzfassung, etc.
+%
+\title{Modular game engine in Rust - Comparing performance and memory usage of subsystems to C++}
+\author{Lukas Vogl, BSc.}
+\studentnumber{gs16m007}
+\supervisor{Dipl.-Ing. Stefan Reinalter}
+\secondsupervisor{Mag.rer.nat. Dr.techn. Eugen Jiresch}
+\place{Wien}
+% German abstract
+\kurzfassung{
+Modulare Spieleengines zeichnen sich dadurch aus, dass sie intern aus verschiedenen Subsystemen bestehen die unterschiedlichste Aufgaben abarbeiten. Beispielhafte Systeme sind unter anderem Speichermanagement, Rendering oder Physiksimulation. Die Gemeinsamkeit zwischen den Systemen, unabhägig davon wie hardwarenahe oder abstrakt diese sind, sind Aspekte wie Performance und Speicherverbrauch. Um möglichst viel Kontrolle über diese Bereiche zu haben entscheiden sich viele EntwicklerInnen für Systemprogrammiersprachen wie C++ als Entwicklungswerkzeug. Im Zuge dieser Arbeit wird der Autor die seit 2015 existierende Programmiersprache Rust verwenden um ausgewählte Subsysteme einer modularen Spieleengine zu implementieren. Ziel der Arbeit ist es zu untersuchen, ob Rust durch seine neue Konzepte gängige Schwierigkeiten bei der C++ Entwicklung vermeiden und gleichzeitig eine gleichwertige Performance liefern kann. Dafür werden die in Rust implementierten Systeme zusätzlich in C++ implementiert und anschließend in verschiedenen Szenarien vermessen und verglichen. Aus den Ergebnissen wird evaluiert ob Rust als Programmiersprache für Spieleengines in Frage kommt. Zusätzlich werden die Implementierungsdetails der verschiedenen Sprachen und Systeme behandelt, wodruch aufgezeigt wird welche Unterschiede zwischen den beiden Sprachen bestehen.
+
+}
+\schlagworte{Rust, C++, Engine, Speichermanagement, Performance}
+% English abstract
+\outline{
+Modular game engines are defined by the fact that they are composed of different subsystems working on many distinct tasks.
+Exemplary systems are, inter alia, memory management, rendering or physics simulation. The similarity between the systems, regardless of how low-level or abstract they are, are performance and memory consumption. To gain control over these fields most programmers choose system programming languages such as C++ as development tool. In this thesis the the author chose the programming language Rust to implement selected subsystems of a modular game engine. Is it the goal of the thesis to investigate whether Rust can avoid common difficulties known from C++ due to its new concepts while maintaining C++ like performance. For this purpose the selected systems will also be implemented in C++. They are then surveyed in different scenarios and compared to each other. The results are evaluated to see whether it is worth considering using Rust as a language for game engine programming. Furthermore the implementation details ofthe different languages and systems are discussed whereby the differences between the two languages are outlined;
+}
+\keywords{Rust, C++, Engine, Memory management, performance}
+\acknowledgements{\blindtext}
+
+% -----------------------------------------
+\begin{document}
+	
+%Festlegungen für den HARVARD-Zitierstandard
+\ifthenelse{\equal{\FHTWCitationType}{HARVARD}}{
+	\bibliographystyle{Harvard_FHTW_MR}%Zitierstandard FH Technikum Wien, Studiengang Mechatronik/Robotik, Version 1.2e
+	\citationstyle{dcu}%Correct citation-style (Harvardand, ";" between citations, "," between author and year)
+	\citationmode{abbr}%use "et al." with first citation
+	\iflanguage{ngerman}{
+		%Deutsch Neue Rechtschreibung
+		\newcommand{\citepic}[1]{(Quelle: \protect\cite{#1})}%Zitat: Bild
+		\newcommand{\citefig}[2]{(Quelle: \protect\cite{#1}, S. #2)}%Zitat: Bild aus Dokument
+		\newcommand{\citefigm}[2]{(Quelle: modifiziert "ubernommen aus \protect\cite{#1}, S. #2)}%Zitat: modifiziertes Bild aus Dokument
+		\newcommand{\citep}{\citeasnoun}%In-Line Zitiat entweder mit \citep{} oder \citeasnoun{}
+		\newcommand{\acessedthrough}{Verf{\"u}gbar unter:}%Für URL-Angabe
+		\newcommand{\acessedthroughp}{Verf{\"u}gbar bei:}%Für URL-Angabe (Geschützte Datenbank, Zugriff durch FH)
+		\newcommand{\acessedat}{Zugang am}%Für URL-Datum-Angabe
+		\newcommand{\singlepage}{S.}%Für Seitenangabe (einzelne Seite)
+		\newcommand{\multiplepages}{S.}%Für Seitenangabe (mehrere Seiten)
+		\newcommand{\chapternr}{K.}%Für Kapitelangabe
+		\renewcommand{\harvardand}{\&}%Harvardand in Zitaten
+		\newcommand{\abstractonly}{ausschließlich Abstract}
+		\newcommand{\edition}{. Auflage}%Angabe der Auflage
+	}{
+		\iflanguage{german}{
+			%Deutsch
+			\newcommand{\citepic}[1]{(Quelle: \protect\cite{#1})}%Zitat: Bild
+			\newcommand{\citefig}[2]{(Quelle: \protect\cite{#1}, S. #2)}%Zitat: Bild aus Dokument
+			\newcommand{\citefigm}[2]{(Quelle: modifiziert "ubernommen aus \protect\cite{#1}, S. #2)}%Zitat: modifiziertes Bild aus Dokument
+			\newcommand{\citep}{\citeasnoun}%In-Line Zitiat entweder mit \citep{} oder \citeasnoun{}
+			\newcommand{\acessedthrough}{Verf{\"u}gbar unter:}%Für URL-Angabe
+			\newcommand{\acessedthroughp}{Verf{\"u}gbar bei:}%Für URL-Angabe (Geschützte Datenbank, Zugriff durch FH)
+			\newcommand{\acessedat}{Zugang am}%Für URL-Datum-Angabe
+			\newcommand{\singlepage}{S.}%Für Seitenangabe (einzelne Seite)
+			\newcommand{\multiplepages}{S.}%Für Seitenangabe (mehrere Seiten)
+			\newcommand{\chapternr}{K.}%Für Kapitelangabe
+			\renewcommand{\harvardand}{\&}%Harvardand in Zitaten
+			\newcommand{\abstractonly}{ausschließlich Abstract}
+			\newcommand{\edition}{. Auflage}%Angabe der Auflage
+		}{
+			%Englisch
+			\newcommand{\citepic}[1]{(Source: \protect\cite{#1})}%Zitat: Bild
+			\newcommand{\citefig}[2]{(Source: \protect\cite{#1}, p. #2)}%Zitat: Bild aus Dokument
+			\newcommand{\citefigm}[2]{(Source: taken with modification from \protect\cite{#1}, p. #2)}%Zitat: modifiziertes Bild aus Dokument
+			\newcommand{\citep}{\citeasnoun}%In-Line Zitiat entweder mit \citep{} oder \citeasnoun{}
+			\newcommand{\acessedthrough}{Available at:}%Für URL-Angabe
+			\newcommand{\acessedthroughp}{Available through:}%Für URL-Angabe (Geschützte Datenbank, Zugriff durch FH)
+			\newcommand{\acessedat}{Accessed}%Für URL-Datum-Angabe
+			\newcommand{\singlepage}{p.}%Für Seitenangabe (einzelne Seite)
+			\newcommand{\multiplepages}{pp.}%Für Seitenangabe (mehrere Seiten)
+			\newcommand{\chapternr}{Ch.}%Für Kapitelangabe
+			\renewcommand{\harvardand}{\&}%Harvardand in Zitaten
+			\newcommand{\abstractonly}{Abstract only}
+			\newcommand{\edition}{~edition}%Edition -> note, that you have to write "edition = {2nd},"!
+}}}
+
+\maketitle
+
+\chapter{Introduction}
+Game engines are an essential part of the gaming industry. Todays state-of-the-art game engines have committed themselves to the goal of creating visually appealing games while also providing reasonable performance. Achieving this requires the engine engineers to invest a great amount of time and know-how of underlying hardware. Many of these engines, choosing Unity and Unreal Engine 4 as example, are using C++ as underlying technology. C++ is the language of choice due to it's capabilities of managing memory manually without the limitations of a garbage collector. These capabilities are the foundation for high performance software and essential to game engines. But while the benefits of manual memory management are indisputable it also comes with common pitfalls. 
+
+This thesis aims to examine whether the system programming language Rust can be used as a replacement for C++. Rust claims to avoid pitfalls made in C++ while maintaining similar performance. As a basis for discussion the author will implement selected engine subsystems for memory management, containers and an entity component system. All systems are written in Rust and C++ to later measure and compare their performance in different scenarios.
+
+Chapter 2 starts with the description of the history of game engines. It will also outline state-of-the-art engines and shortly describe them. Furthermore, it introduces important tools and the asset pipeline, concluding the chapter with a section presenting important engine subsystems.
+The next chapter introduces the reader to the Rust language. It describes the current state of Rust and creates a basic understanding of it by introducing the most important concepts. At the end it highlights pitfalls that can occur when working with Rust to outline that Rust is not a silverbullet.
+In chapter 4 the author talks about the implementation details of the subsystems and where the differences between Rust and C++ are visible. It will also provide an overview of the general engine architecture of the Spark engine. Spark is the name of the project that will rise from this thesis. The results of the performance measurements are then compared and discussed in chapter 5. Chapter 6 will then finish the thesis with the conclusion.
+
+
+% Game engine arch
+\chapter{Game engine architecture}
+\blindtext
+\section{Evolution of game engines}
+\blindtext
+\section{Commercial game engines}
+\blindtext
+\section{Rust game engines}
+\blindtext
+\section{Tools and asset pipeline}
+\blindtext
+\subsection{Editor}
+\blindtext
+\subsection{Asset pipeline}
+\blindtext
+\section{Engine subsystems overview}
+\blindtext
+\subsection{Memory Management}
+\blindtext
+\subsection{Job System}
+\blindtext
+\subsection{Rendering}
+\blindtext
+\subsection{Entity system}
+\blindtext
+\subsection{Scripting}
+\blindtext
+% Rust
+\chapter{Rust}
+\blindtext
+\section{Current state}
+\blindtext
+\section{Rust ecosystem}
+\blindtext
+\section{Concepts}
+\blindtext
+\subsection{Borrow checker}
+\blindtext
+\subsection{Traits}
+\blindtext
+\subsection{Hygenic macros}
+\blindtext
+\section{Pitfalls}
+\blindtext
+% Implementation
+\chapter{Subsystem implementation}
+\blindtext
+\section{Spark engine architecture}
+\blindtext
+\section{Development environment}
+\blindtext
+\section{Rendering framework}
+\blindtext
+\section{Memory Management}
+\blindtext
+\subsection{C++ implementation}
+\blindtext
+\subsection{Rust implementation}
+\blindtext
+\section{Containers}
+\blindtext
+\subsection{C++ implementation}
+\blindtext
+\subsection{Rust implementation}
+\blindtext
+\section{Entity Component System}
+\blindtext
+\subsection{C++ implementation}
+\blindtext
+\subsection{Rust implementation}
+\blindtext
+% Result evaluation
+\chapter{Measures \& Comparisons}
+\blindtext
+\section{Environment}
+\blindtext
+\section{Testcases}
+\blindtext
+\section{C++ performance}
+\blindtext
+\subsection{Memory Management}
+\blindtext
+\subsection{Container}
+\blindtext
+\subsection{Entity Component System}
+\blindtext
+\section{Rust performance}
+\blindtext
+\subsection{Memory Management}
+\blindtext
+\subsection{Container}
+\blindtext
+\subsection{Entity Component System}
+\blindtext
+\section{Comparison}
+\blindtext
+% Conclusion
+\chapter{Conclusion}
+
+%
+% Hier beginnen die Verzeichnisse.
+%
+\clearpage
+\nocite{GEA_2}
+\nocite{C_Lan}
+\nocite{ProRus}
+\nocite{GEG_3}
+\nocite{Portisch17}
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,Literatur}
+\clearpage
+% Das Abbildungsverzeichnis
+\listoffigures
+\clearpage
+
+% Das Tabellenverzeichnis
+\listoftables
+\clearpage
+
+% Das Quellcodeverzeichnis
+\listofcode
+\clearpage
+
+\phantomsection
+\addcontentsline{toc}{chapter}{\listacroname}
+\chapter*{\listacroname}
+\begin{acronym}[]
+\end{acronym}
+
+\end{document}

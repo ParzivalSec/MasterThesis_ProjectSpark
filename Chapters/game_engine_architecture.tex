@@ -54,26 +54,76 @@ To conclude this paragraph about \ac{UE4} it can be said that Epic created an en
 
 The biggest competitor on the market for \ac{UE4} is Unity, and there are several reasons why there is a second product that viable. Unity was born in 2004 and created by the company called \textit{Over the Edge} which was later re-branded to \textit{Unity Technologies}. Contrary to the evolution of \ac{UE4} that evolved from moddable games and with easy extension in mind, Unity was created to lower the access barriers for 2D and 3D game development. After their first game, GooBall, failed commercially the founders discovered how valuable engine software and tools are. This led to their decision of building an engine that is accessible to as many people as possible and that promises ease of development and cross-platform support. With these principles in mind Unity became a product that was adopted by many developers and nowadays is used by many studios and small developers.
 
-In contrast to \ac{UE4} the source code of Unity is not freely accessible but it can be acquired by acquiring an enterprise subscription. If source code access is not needed, which is the case more a major percentage of the developer products, Unity offers a very fair licensing model. A personal license can be registered for free, with the constraint that a product does not generate more revenue than 100.000\$ annually. This version includes all Unity core features as well as continuous upgrades and access to Unity beta versions. The next tier, called Unity Plus, includes everything of the previous one and adds more flexible customizations (custom splash screen, pro editor UI), more in depth analytics and it alters the cap of concurrent players on multiplayer games hosted by Unity. The Plus tier costs 35\$ per month and is constrained by a revenue cap of 200.000\$ per year. If the income exceeds that limit, the Unity Pro tier comes without any revenue limit at all for 125\$ per month. It adds again more in-depth analytics and alters the concurrent players cap once more.
+In contrast to \ac{UE4} the source code of Unity is not freely accessible but it can be acquired by acquiring an enterprise subscription. If source code access is not needed, which is the case more a major percentage of the developer products, Unity offers a very fair licensing model. A personal license can be registered for free, with the constraint that a product does not generate more revenue than 100.000\$ annually. This version includes all Unity core features as well as continuous upgrades and access to Unity beta versions. The next tier, called Unity Plus, includes everything of the previous one and adds more flexible customizations (custom splash screen, pro editor UI), more in depth analytics and it alters the cap of concurrent players on multiplayer games hosted by Unity. The Plus tier costs 35\$ per month and is constrained by a revenue cap of 200.000\$ per year. If the income exceeds that limit, the Unity Pro tier comes without any revenue limit at all for 125\$ per month. It adds again more in-depth analytics and alters the concurrent players cap once more. Independent of the selected tier, Unity includes an editor to interact with its tools and the game world. 
 
-Independent of the selected tier, Unity includes an editor to interact with its tools and the game world. 
+\clearpage
 
 \begin{figure}[h!]
-	\includegraphics[width=\linewidth]{PICs/unreal_ed.png}
+	\includegraphics[width=\linewidth]{PICs/unity_ed.png}
 	\caption{The default layout of the editor shipped with Unity}
 	\label{fig:unity_ed}
 \end{figure}
 
 The editor is quite similar to the one of \ac{UE4} but the views and tools differ in their naming. Going from left to right and top to bottom Figure \ref{fig:unity_ed} shows the Hierarchy, collection of game objects that are placed in the game world, the scene or current world, the Inspector, a list of components attached to a single game object and the project structure showing folders and assets. 
 What was called an actor in \ac{UE4} can be compared to a game object in Unity. A game object is an entity that can be placed in the world but does not contain any logic itself. Rather it is a container that holds a collection of components, each holding data or logic. This system of entities and components is called an \acl{ECS} and will be described in detail at the end of this chapter. Because of the \ac{ECS} components can be shared and reused among projects which simplifies the development process and cuts iteration times when done properly.
-It was already mentioned that components can also contain logic which already describes the basics on how game rules and logic are created in Unity. Where \ac{UE4} provides a visual scripting system Unity does not have anything similar. In Unity scripting is done in C\#, a high-level programming language running in the MonoDevelop/.Net runtime. The work flow of creating gameplay logic often starts with a programmer creating a new scripting component in C\# which then later can be used by designers to assemble new game objects without needing to touch any C\# code. This is ensured by a system that allows programmers to expose certain properties of the script to the editor, where values can be tweaked by designers to fit the needs of the game. Although Unity does not have a visual scripting system it is easy to create scripts because they are contained withing a single component and an error inside of them will not crash the whole engine but is guarded by the scripting runtime.
+It was already mentioned that components can also contain logic which already describes the basics on how game rules and logic are created in Unity. Where \ac{UE4} provides a visual scripting system Unity does not have anything similar. In Unity scripting is done in C\#, a high-level programming language running in the MonoDevelop/.Net runtime. The work flow of creating gameplay logic often starts with a programmer creating a new scripting component in C\# which then later can be used by designers to assemble new game objects without needing to touch any C\# code. This is ensured by a system that allows programmers to expose certain properties of the script to the editor, where values can be tweaked by designers to fit the needs of the game. Although Unity does not have a visual scripting system it is easy to create and run scripts because they are contained withing a single component and an error inside of them will not crash the whole engine but is guarded by the scripting runtime.
+
+\clearpage
+
+\begin{lstlisting}[language={[Sharp]C}, frame=single, caption={Example of an empty C\# script in Unity}, label={Script}]
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class AScript : MonoBehaviour {
+	// Use this for initialization
+	void Start () {
+	// Execute code at component start ...
+	}
+	
+	// Update is called once per frame
+	void Update () {
+	// Execute code once per frame ...
+	}
+}
+\end{lstlisting}
+
+While previous versions of Unity supported two additional scripting languages, Boo and Javascript, C\# was the most dominant scripting language used among Unity games. 
+
+A long time it was the node-based material graph that separated Unity and \ac{UE4}, but since version 2018.1 (that is in beta-state at the time of writing) Unity introduces the \textit{Shader Graph}, seen in Figure \ref{fig:unity_shader_graph}, which serves as a visual interface for building shaders. Together with the \textit{Scriptable Render Pipeline} and the new job system, programmers gain more access over low-level and performance critical parts of the engine which closes the gap to \ac{UE4} a bit more regarding performance and control.
+
+\begin{figure}[h!]
+	\includegraphics[width=\linewidth]{PICs/unity_shader_graph.png}
+	\caption{The new visual shader graph editor that ships with Unity 2018.1}
+	\label{fig:unity_shader_graph}
+\end{figure}
+
+Together with all these features and the asset store, a marketplace hosted by Unity where developers can upload, download and sell components, art and different plugins Unity is a tool suitable for games from any genre. Its low entrance barriers and support for many different platforms make it a powerful competitor to \ac{UE4}. It is also due to these aspects that Unity is the tool of choice for game developers that plan to release on mobile platforms, such as Android or IOS. Unity is also the engine often chosen for rapid prototyping due to good iteration times and the asset store.
 
 \subsection{Molecular}
 \blindtext
+
 \subsection{Tombstone}
-\blindtext
+
+The Tombstone engine is developed by \textit{Terathon Software}, which was founded by Eric Lengyel in 2001. It is a cross-platform engine written in C++ that runs on Windows, Playstation 4, Linux and MacOS. This engine is mentioned in this chapter because it features an interesting architecture and invented and uses several innovative and robust techniques.
+The Tombstones engine architecture is separated into several layers of managers combined with general utility libraries and a plugin system. General utilities such as memory management and a container library build the bases for managers of different systems. These system manager include for example the resource, thread and graphics manager. Upon this layer more high level managers are built that handle the game world, the scene hierarchy or the animation system. To work with these systems Tombstone offers several plugins, shipped with the engine.
+
+ \begin{figure}[h!]
+ 	\centering \includegraphics[width=0.5 \linewidth]{PICs/tombstone_ed.png}
+ 	\caption{The world editor plugin used to edit worlds in the Tombstone engine}
+ 	\label{fig:tombstone_ed}
+ \end{figure}
+
+Among these there is also the world editor that, similar to the bigger engines, allows for creating worlds and levels. Beside the world editor other plugins are a visual shader editor, several tools for importing assets and \ac{UI} builder to generate panels and widgets. Beside the well-defined architecture Tombstone features two standards also created by Eric Lengyel, named the \ac{OpenDDL} and the \ac{OpenGEX}. These protocols are used for exchanging data with asset authoring software like Maya or Photoshop and to store serialized data. The design of the architecture if very well described in a visual form directly at the Tombstone homepage (http://tombstoneengine.com/architecture.php).
+
+Contrary to the bigger companies the Tombstone engine's licensing model does not offer free versions. To acquire a lifetime license for all platforms (Windows, Linux \& MacOS) a fee of 495\$ per person has to be paid. This license does not include any revenue share nor is it limited to a specific amount of shipped games.
+
+The Tombstone engine is an example of a quality piece of software and showcases in what direction an engine can develop if the design goals are carefully thought out. It also tries to establish open standards for exchanging data between different parts of the game development toolchain. If such standards would be implemented and obeyed by more engines it would ease the process of migrating the workflow of engineering teams to another engine or software that would better fit their current project.
+
 \section{Rust game engines}
-\blindtext
+
+Because the goal of this thesis is to research whether Rust is a potential choice for a game engine's main language the author wants to highlight work already done in that field. All previously described solutions are driven by C++. While some of them use it for the entire engine, others only built their core systems in C++ and use higher level languages on top of it. To showcase what was already done in the Rust ecosystem and to better understand some decisions the author made when implementing the submodules this section is dedicated to the two biggest engines written in Rust - Piston and Amethyst.
+
 \subsection{Piston}
 \blindtext
 \subsection{Amethyst}

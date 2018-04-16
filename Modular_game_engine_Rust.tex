@@ -133,63 +133,8 @@ Chapter 2 will introduce the reader to the history and evolution of game engines
 The next chapter provides the reader with an overview of the Rust programming language. It describes the current state of Rust and creates a basic understanding of it by introducing the most important concepts and patterns. It will then compare common and well-known C++ problems and pitfalls with corresponding code in Rust. At the end the author outlines encountered difficulties that can occur when working with Rust. 
 In chapter 4 the author talks about the implementation details of the implemented subsystems and where the differences between Rust and C++ are visible. The development process, architecture and project setup of the Spark engine (the implemented submodules will serve as a basis for this engine in future work) will be discussed. The performance measurement results and observed scenarios are then compared and discussed in chapter 5. Chapter 6 will then finish the thesis with the conclusion.
 
+\include{./Chapters/game_engine_architecture}
 
-% Game engine arch
-\chapter{Game engine architecture}
-
-Game engines are tightly connected to the evolution of video games themselves. Where 50 years ago a game was build out of hardware the rapid development of a computer's processing power and storage capabilities changed the process of how games are made. Today a game runs on machines assembled from multiple cores, several \acp{GB} of \ac{RAM} and a powerful \ac{GPU}. But whether the target platform is a PC or a specialized gaming console every modern game has to fulfill certain constraints to be a viable product. This chapter will highlight some of the most important milestones in the history of video games and game engines. It will also give an overview of well-known products on the game engine market and will conclude with the description of selected submodules, the underlying building blocks of a game engine.
-
-\section{Evolution of game engines}
-
-When the first developers started to create video games, the term \textit{game engine} was non existent. At this time the software that ran the simulation a player experienced was tailored to the needs of a specific genre, hardware and game. It was then in the 1990s and with the rise of games like \textit{Doom (1993)} and \textit{Quake (1996)} that certain software was referred to as a \textit{game engine}. The mentioned games separated their technical backbones into different components, creating an architecture that distinguishes between core software modules and game specific entities such as art assets, levels and the general rules of the game. Due to the well-designed architecture and separations the effort to create a new game, where the general concept is the same, was reduced from writing every system and piece of code to creating new art and only tweak and configure the software of previous games. This was also the birth of the \textit{modding} community, where individuals and also studios modify existing games or engine software to create new content or whole games.
-
-From that time on the developers created their games with modding and future extension in mind. Smaller studios started to license the parts of the engine software they could not afford to create by themselves, be it money, time or man power. With the concept of licensing studios, that created the extensible and reusable software packages, created another source of income. But while the goal of an extensible and reusable software collection is a desirable one, the line between a game and an engine is often softer than desired. Because of the nature of games and their specific genre rules it is hard, if not even impossible, to develop a generic engine that can serve as a template for every game. It became the responsibility of the engine developer to find the balance between general-purpose functionality and game or platform tailored optimizations. This trade-off has to be made because the developer can only assume how the software will be used. And so a game engine developed and optimized for rendering \acp{FPS} will probably not run a \ac{RTS} game with maximum performance due to the different rule sets and features both genres require.
-
-Empowered by the wish of creating games that can be modded and licensed bigger studios started to create commercial engines. \textit{Id Software}, the company that created \textit{Doom} and the \textit{Quake} trilogy, opened up the field with their \ac{FPS} engines in the early 1990s. \textit{Id Software} was then followed by \textit{Epic Games, Inc.}, the creator of the Unreal Engine, which served as the basis for their well-known game \textit{Unreal} and later the \textit{Unreal Tournament} series. The current version, the Unreal Engine 4, is one of the most popular game engines of our time and will be described in the next section. Other game engines started that time and which should not be left unmentioned are \textit{CryENGINE} (Crytech), \textit{Source Engine} (Valve), \textit{Frostbite} (DICE) and \textit{Unity}.
-
-A long time many, if not all, of the named engines followed a model of selling licenses to developers for accessing the engine and the source code. But it was around 2009 to 2015 that big engine developers including Unity and Epic Games, decided to rework their business model and let developers use their software for free. The license terms often include a revenue share if the game should be successful but the basic usage of the engines is free most of the time. Although this certainly had a huge impact on smaller engines and teams that cannot compete with the teams working at Epic or Unity, this decision lowered the entrance barrier for ongoing game developers and students and can be seen as one of the biggest milestones in the modern history of game engines.
-
-Speaking of Unity and Epic, the next section will describe modern game engines in the market, how they work and what they are used for. In contrast to Unity and Unreal Engine 4, two smaller engines will be described to show the difference between the approaches and why the flexibility of smaller engines and teams can also be an advantage over big software projects.
-
-
-\section{Modern commercial game engines}
-
-As described in the previous section game engines evolved from extensible game or genre tailored software to standalone viable products used to create different games. The market is actually dominated by two big engines, Unity and Unreal Engine 4, whereas the rest is separated between custom in-house and several medium to small engines and open source projects. The author is going to describe the features and license models of the two big solutions as well as of two smaller but more flexible ones.
-
-\subsection{Unreal Engine 4}
-\blindtext
-\subsection{Unity}
-\blindtext
-\subsection{Molecular}
-\blindtext
-\subsection{Tombstone}
-\blindtext
-\section{Rust game engines}
-\blindtext
-\subsection{Piston}
-\blindtext
-\subsection{Amethyst}
-\blindtext
-\section{Tools and asset pipeline}
-\blindtext
-\subsection{Editor}
-\blindtext
-\subsection{Asset pipeline}
-\blindtext
-\section{Engine subsystems overview}
-\blindtext
-\subsection{Memory Management}
-\blindtext
-\subsubsection{Custom Allocators}
-\blindtext
-\subsection{Job System}
-\blindtext
-\subsection{Rendering}
-\blindtext
-\subsection{Entity Component System}
-\blindtext
-\subsection{Scripting}
-\blindtext
 % Rust
 \chapter{Rust}
 \blindtext
@@ -302,6 +247,10 @@ As described in the previous section game engines evolved from extensible game o
 	\acro{GPU}{graphics processing unit}
 	\acro{FPS}{first person shooter}
 	\acro{RTS}{real-time strategy}
+	\acro{UE4}{Unreal Engine 4}
+	\acro{UI}{user interface}
+	\acro{UBT}{Unreal Build Tool}
+	\acro{UHT}{Unreal Header Tool}
 \end{acronym}
 
 \end{document}

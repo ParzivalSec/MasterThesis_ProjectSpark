@@ -129,11 +129,12 @@ Game engines are an essential part of the gaming industry. Todays state-of-the-a
 
 This thesis aims to examine whether the system programming language Rust can be used as a replacement for C++. Rust claims to avoid pitfalls made in C++ while maintaining similar performance. As a basis for discussion the author will implement selected engine subsystems: memory management, containers and an \ac{ECS}. All systems, except for the \ac{ECS} which already exists in Rust, are written in Rust and C++ to later measure and compare their performance in different scenarios. The results of the measurements shall then serve as the basis for the discussion if Rust can be considered as a viable language for game engine programming.
 
-Chapter 2 will introduce the reader to the history and evolution of game engines. It will also outline state-of-the-art products and shortly describe them. Furthermore, it introduces important tools that tightly related to the underlying engine and the concept of an asset pipeline, concluding the chapter with a section presenting the theory and examples of selected engine subsystems.
+Chapter 2 will introduce the reader to the history and evolution of game engines. It will also outline state-of-the-art products and shortly describe them. In chapter 3 important tools that are tightly related to the underlying engine and the concept of an asset pipeline are discussed, concluding the chapter with a section presenting the theory and examples of selected engine subsystems.
 The next chapter provides the reader with an overview of the Rust programming language. It describes the current state of Rust and creates a basic understanding of it by introducing the most important concepts and patterns. It will then compare common and well-known C++ problems and pitfalls with corresponding code in Rust. At the end the author outlines encountered difficulties that can occur when working with Rust. 
-In chapter 4 the author talks about the implementation details of the implemented subsystems and where the differences between Rust and C++ are visible. The development process, architecture and project setup of the Spark engine (the implemented submodules will serve as a basis for this engine in future work) will be discussed. The performance measurement results and observed scenarios are then compared and discussed in chapter 5. Chapter 6 will then finish the thesis with the conclusion.
+In chapter 5 the author talks about the implementation details of the implemented subsystems and where the differences between Rust and C++ are visible. The development process, architecture and project setup of the Spark engine (the implemented submodules will serve as a basis for this engine in future work) will be discussed. The performance measurement results and observed scenarios are then compared and discussed in chapter 6. Chapter 7 will then finish the thesis with the conclusion.
 
-\include{./Chapters/game_engine_architecture}
+\include{./Chapters/CHAP_1_engine_history_and_overview}
+\include{./Chapters/CHAP_2_game_engine_architecture}
 
 % Rust
 \chapter{Rust}
@@ -253,6 +254,10 @@ In chapter 4 the author talks about the implementation details of the implemente
 	\acro{UHT}{Unreal Header Tool}
 	\acro{OpenGEX}{Open Game Engine Exchange Format}
 	\acro{OpenDDL}{Open Data Description Language}
+	\acro{IDE}{integrated development environment}
+	\acro{API}{application programming interface}
+	\acro{SDK}{software development kit}
+	\acro{FPS}{frames per second}
 \end{acronym}
 
 \end{document}

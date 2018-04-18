@@ -5,6 +5,8 @@
 \documentclass[MGS, Master, english]{twbook}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+% Package for newlines without indent for each new paragraph
+% \usepackage[parfill]{parskip}
 
 % Define the standard for citations for this paper - IEEE or HARVARD
 \newcommand{\FHTWCitationType}{IEEE} 
@@ -61,7 +63,7 @@ Modulare Spieleengines zeichnen sich dadurch aus, dass sie intern aus verschiede
 % English abstract
 \outline{
 Modular game engines are defined by the fact that they are composed of different subsystems working on many distinct tasks.
-Exemplary systems are, inter alia, memory management, rendering or physics simulation. The similarity between the systems, regardless of how low-level or abstract they are, are performance and memory consumption. To gain control over these fields most programmers choose system programming languages such as C++ as development tool. In this thesis the the author chose the programming language Rust to implement selected subsystems of a modular game engine. Is it the goal of the thesis to investigate whether Rust can avoid common difficulties known from C++ due to its new concepts while maintaining C++ like performance. For this purpose the selected systems will also be implemented in C++. They are then surveyed in different scenarios and compared to each other. The results are evaluated to see whether it is worth considering using Rust as a language for game engine programming. Furthermore the implementation details ofthe different languages and systems are discussed whereby the differences between the two languages are outlined;
+Exemplary systems are, inter alia, memory management, rendering or physics simulation. The similarity between the systems, regardless of how low-level or abstract they are, are performance and memory consumption. To gain control over these fields most programmers choose system programming languages such as C++ as development tool. In this thesis the the author chose the programming language Rust to implement selected subsystems of a modular game engine. Is it the goal of the thesis to investigate whether Rust can avoid common difficulties known from C++ due to its new concepts while maintaining C++ like performance. For this purpose the selected systems will also be implemented in C++. They are then surveyed in different scenarios and compared to each other. The results are evaluated to see whether it is worth considering using Rust as a language for game engine programming. Furthermore the implementation details ofthe different languages and systems are discussed whereby the differences between the two languages are outlined.
 }
 \keywords{Rust, C++, Engine, Memory management, performance}
 \acknowledgements{\blindtext}
@@ -133,86 +135,12 @@ Chapter 2 will introduce the reader to the history and evolution of game engines
 The next chapter provides the reader with an overview of the Rust programming language. It describes the current state of Rust and creates a basic understanding of it by introducing the most important concepts and patterns. It will then compare common and well-known C++ problems and pitfalls with corresponding code in Rust. At the end the author outlines encountered difficulties that can occur when working with Rust. 
 In chapter 5 the author talks about the implementation details of the implemented subsystems and where the differences between Rust and C++ are visible. The development process, architecture and project setup of the Spark engine (the implemented submodules will serve as a basis for this engine in future work) will be discussed. The performance measurement results and observed scenarios are then compared and discussed in chapter 6. Chapter 7 will then finish the thesis with the conclusion.
 
-\include{./Chapters/CHAP_1_engine_history_and_overview}
-\include{./Chapters/CHAP_2_game_engine_architecture}
-
-% Rust
-\chapter{Rust}
-\blindtext
-\section{Current state}
-\blindtext
-\section{Rust ecosystem}
-\blindtext
-\section{Concepts}
-\blindtext
-\subsection{Borrow checker}
-\blindtext
-\subsection{Traits}
-\blindtext
-\subsection{Hygienic macros}
-\blindtext
-\section{Pitfalls}
-\blindtext
-% Implementation
-\chapter{Subsystem implementation}
-\blindtext
-\section{Spark engine architecture}
-\blindtext
-\section{Development environment}
-\blindtext
-\section{Rendering framework}
-\blindtext
-\section{Memory Management}
-\blindtext
-\subsection{API}
-\blindtext
-\subsection{C++ implementation}
-\blindtext
-\subsection{Rust implementation}
-\blindtext
-\section{Containers}
-\blindtext
-\subsection{API}
-\blindtext
-\subsection{C++ implementation}
-\blindtext
-\subsection{Rust implementation}
-\blindtext
-\section{Entity Component System}
-\blindtext
-\subsection{API}
-\blindtext
-\subsection{C++ implementation}
-\blindtext
-\subsection{Rust implementation}
-\blindtext
-% Result evaluation
-\chapter{Measures \& Comparisons}
-\blindtext
-\section{Environment}
-\blindtext
-\section{Testcases}
-\blindtext
-\section{C++ performance}
-\blindtext
-\subsection{Memory Management}
-\blindtext
-\subsection{Container}
-\blindtext
-\subsection{Entity Component System}
-\blindtext
-\section{Rust performance}
-\blindtext
-\subsection{Memory Management}
-\blindtext
-\subsection{Container}
-\blindtext
-\subsection{Entity Component System}
-\blindtext
-\section{Comparison}
-\blindtext
-% Conclusion
-\chapter{Conclusion}
+\include {./Chapters/CHAP_2_engine_history_and_overview}
+\include {./Chapters/CHAP_3_game_engine_architecture}
+\include {./Chapters/CHAP_4_rust_introduction}
+\include {./Chapters/CHAP_5_implementation_details}
+\include {./Chapters/CHAP_6_measurements}
+\include {./Chapters/CHAP_7_conclusion}
 
 %
 % Hier beginnen die Verzeichnisse.
@@ -258,6 +186,7 @@ In chapter 5 the author talks about the implementation details of the implemente
 	\acro{API}{application programming interface}
 	\acro{SDK}{software development kit}
 	\acro{FPS}{frames per second}
+	\acro{OS}{operating system}
 \end{acronym}
 
 \end{document}

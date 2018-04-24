@@ -157,34 +157,258 @@ Listing \ref{lst:rust_match} shows several use cases of the match statement. The
 
 Regarding ownership Rust promises that the decision over a value's lifetime is up to the user and that the program, in spite of the given freedom, will never use a pointer to an already freed object (dangling pointer). While C++ allows for flexible lifetime decisions it cannot guarantee that the program does never hit a dangling pointer because it's the user's responsibility to ensure that no pointer to an already freed object is used.
 Some highlevel languages such as Java or C\# solve the dangling pointer problem by introducing a garbage collector that controls when exactly objects are freed. This technique however also introduces an impact in performance.
-To cope with this problem and to avoid garbage collection Rust came up with its own concept of ownership. In C++ and other languages it is said that an object 'owns' some other value that it points to and the owner therefore has control over the value's lifetime. In Rust this implicit ownership rule was turned to an explicit one and the language enforces that a value just has a single owner that controls its lifetime. As soon as the owner is freed, or dropped in Rust terminology, the owned value is dropped too. One example of Rust's ownership model is its \texttt{Box$<$T$>$} type that is a pointer to a value of type \textit{T} that is stored on the heap. When the \textit{Box} goes out of scope and is dropped, it frees the space it has allocated too, avoiding an otherwise introduce memory leak. \cite[Chapter 4. Ownership]{ProgrammingRust}
+To cope with this problem and to avoid garbage collection Rust came up with its own concept of ownership. In C++ and other languages it is said that an object 'owns' some other value that it points to and the owner therefore has control over the value's lifetime. In Rust this implicit ownership rule was turned to an explicit one and the language enforces that a value just has a single owner that controls its lifetime. As soon as the owner is freed, or dropped in Rust terminology, the owned value is dropped too. One example of Rust's ownership model is its \texttt{Box$<$T$>$} type that is a pointer to a value of type \textit{T} that is stored on the heap. When a \textit{Box} goes out of scope and is dropped, it frees the space it has allocated too, avoiding an otherwise introduce memory leak. \cite[Chapter 4. Ownership]{ProgrammingRust}
 Whereas C++ also has constructs, called smart pointers, to express ownership, Rust's model comes without the overhead of storing additional meta data at runtime. Smart pointers have to store data for knowing when it is valid to drop the resource. Instead of this runtime overhead, Rust's system has to advantage of avoiding this overhead at all by moving the ownership checks to the compilation stage.
 
 \subsection{Moves}
 
-In C++, when a user assigns a variable to another or passes it to a function by-value, a copy of the value is created. Rust has chosen a different approach and instead of copying values, they are moved. When a move occurs,  the previous owner transfers ownership to the destination and gets uninitialized. The destination now controls the value's lifetime and becomes the new owner. Move semantics also exist in C++ and were introduced in the C++11 standard allowing the programmer to define move constructors and move assignment operators. \cite{CppMove} With the rule of using moves as the default behavior for assignment Rust can allow cheap assignments and keep the ownership clear as well. One trade-off the developer has to pay is that a copy now has to be requested explicitly. To do so in Rust one can implement either the \texttt{Copy} or \texttt{Clone} trait. What exactly a trait is and how they interact with other part of Rust is described in a later section. For now a trait can be though of as an extension, that can be implemented for other types, allowing them to be use by other code parts only knowing the trait's \ac{API}. The first one describes its implementor as trivially copyable by a plain \texttt{memcpy} where the second option requires the caller to invoke the \textit{clone} method that returns a new object. \cite[Chapter 4. Ownership]{ProgrammingRust}
+In C++, when a user assigns a variable to another or passes it to a function by-value, a copy of the value is created. Rust has chosen a different approach and instead of copying values, they are moved. When a move occurs,  the previous owner transfers ownership to the destination and gets uninitialized. The destination now controls the value's lifetime and becomes the new owner. Move semantics also exist in C++ and were introduced in the C++11 standard allowing the programmer to define move constructors and move assignment operators. \cite{CppMove} With the rule of using moves as the default behavior for assignment Rust can allow cheap assignments and keep the ownership clear as well. One trade-off the developer has to pay is that a copy now has to be requested explicitly. To do so in Rust one can implement either the \texttt{Copy} or \texttt{Clone} trait. What exactly a trait is and how they interact with other part of Rust is described in a later section. For now a trait can be though of as an extension, that can be implemented for other types, allowing them to be use by other code parts only knowing the trait's \ac{API}. The first one describes its implementor as trivially copyable by a plain \texttt{memcpy} where the second option requires the caller to invoke the \texttt{clone} method that returns a new object. \cite[Chapter 4. Ownership]{ProgrammingRust}
 
 \subsection{Borrows}
 
 Beside owning pointers, such as a \texttt{Box$<$T$>$}, Rust also defines non-owning pointer types that are called \textit{references}. The major difference to owning-pointers is that a reference has no effect on the lifetime or ownership of the value it is pointing to. In Rust terminology the act of referencing a value is called \textit{$'$borrowing$'$} and the compiler enforces that no reference outlives its referent. There are two kinds of references in Rust -- \textit{shared} and \textit{mutable} ones. A shared reference allows to read the value but not modify it and there can be as many shared references as the programmer needs. A mutable reference however is allowed to be read and modified but no other reference is allowed to be active at the same time. This concept introduces the compile-time rule of either several readers or one writer which is essential to the memory safety of Rust. One thing that shall not stay unmentioned is a big difference between C++ and Rust references. While under the hood both are just addresses, Rust references are allowed to be reseated after initialization whereas C++ references just alias the object they have been initialized with and cannot be reassigned afterwards. \cite[Chapter 5. References]{ProgrammingRust}
 
 \subsection{Lifetimes}
-\blindtext
+
+With the knowledge on how Rust handles moves and references it is now possible to describe a more advanced feature of Rust's ownership model. To fulfill the promise of never using a dangling pointer in the entire program, Rust needs a way to tell, how long a value is valid or, in other words, alive. Although the Rust compiler is often able to deduce the lifetimes of objects or references from the context, there are some situations that require the programmer to opt-in. If such a situation occurs \textit{lifetime parameters} in the form of \texttt{'a}, where \texttt{a} is describing a distinct lifetime. Lifetimes enable the compiler to reason about how values are used and allow it to reject code, that would produce a dangling reference. One example where explicit annotation of lifetime parameters can be necessary is when returned references from functions. Such an example can be seen in the following code listing.\\
+
+\begin{lstlisting}[caption={Returning a reference from a function, needing an explicit lifetime annotation. Compilation error because of a possible dangling reference.}, label={lst:fn_ref_lifetime}, language=C++]
+fn get_element_from_slice<'a>(slice: &'a [u32], index: usize) -> &'a u32 {
+	&slice[index]
+}
+
+/// ... Somewhere in the main function
+
+let ref_to_element;
+{
+	let a_slice = [10, 20, 30, 42, 50];
+	ref_to_element = get_element_from_slice(&a_slice);
+}
+assert_eq!(*ref_to_element, 42);
+
+\end{lstlisting}
+
+\noindent
+As we can see, the function signature of \texttt{get\_element\_from\_slice} is providing a specific lifetime parameter \texttt{<'a>}, that is then connected to the parameter and return value, describing that they both share the same lifetime. With that constraint setup, it is said, that the reference returned by the function is not allowed to live any longer than the slice passed to the function. If the compiler now parses the part of the code that calls the function and then later uses the returned reference after \texttt{a\_slice} left the scope, the program would be rejected with an error and a hint that the slice the reference is pointing into is dropped while there was still a reference into it. The programmer is notified of this possible dangling reference at compile-time, which prevents application errors or undefined behavior at runtime. To solve the problem and make the code in Listing \ref{lst:fn_ref_lifetime} compile, only one line has to be changed. By moving the \texttt{assert\_eq!(*ref\_to\_element, 42)} two lines up into the scope, the reference returned does not live longer than the referee and the compiler will create a valid program.
+
+Beside being needed for returned references explicit lifetime annotations are also necessary when creating custom types that hold references. Because the field of the type is still a reference, the Rust compiler needs to ensure its validity throughout the program the same way every non contained reference is checked. Due to that rule a struct that contains a reference to a value needs an explicit lifetime. The following listing displays how a simple example could look like.\\
+
+\begin{lstlisting}[caption={Struct containing a reference to some value, needing a lifetime annotation to not create a dangling reference.}, label={lst:struct_ref_lifetime}, language=C++]
+struct<'a> SomeData {
+	pub reference: &'a u32,
+}
+
+/// ...
+
+let instance;
+{
+	let x: u32 = 100;
+	instance = SomeData { reference: &x };
+}
+assert_eq!(*instance.reference, 100);
+
+\end{lstlisting}
+
+\noindent
+The code shown in Listing \ref{lst:struct_ref_lifetime} does not compile. The interested reader may already guess that the compilation error is related to a lifetime issue, which is in fact the reason. Because \texttt{SomeData}'s field \texttt{reference} needs a lifetime parameter and the instance was initialized with a reference to x, the struct's lifetime \texttt{'a} is bound to the one of \texttt{x}. It is then following the rules of every other reference and is not allowed to outlive its referent. Again to solve the issue with the code above, the usage of the reference has to be moved into the scope and therefore into the lifetime of \texttt{x}.
+
 \section{Fearless concurrency}
+
+The ownership concepts described in the previous section are very important for every Rust program. Because concurrent code tends to get complex quite fast if the number of threads rises, Rust's ownership concepts help reducing the complexity. Another advantage is the avoidance of concurrent bugs, which are hard to reproduce and debug. Because Rust wants to make concurrent programming more accessible by programmers it provides several features that are built upon design choices already used in concurrent programs. They allow a programmer to chose what style of parallelism is best for the current task and does not enforce the usage of a specific implementation. The following section will describe how one can create threads in Rust and what possibilities for communication and shared state there are.
+
+\subsection{Threads \& immutable shared memory}
+
+As almost every other system level programming language Rust offers an \ac{API} to create and manage threads. It is integrated into the standard library by the \texttt{thread} module. When a programmer needs to create a new thread this can be done by calling the \texttt{spawn} method and providing the function or closure, an anonymous function, it shall execute. The invocation of that function create an operating system thread, having its own thread local stack to store values. The handle returned by that function is later needed to \texttt{join} the thread. Joining is a common term for waiting until execution has terminated. That is needed to ensure that every thread is finished before the main thread terminates, which is ending the program.
+
+Because a thread often also needs data it will operate on, there needs to be a way to provide both, mutable and immutable data. While writing to memory locations in a concurrent fashion needs some extra work for synchronization, read only access is simpler to control. Rust offers several abstractions to model a situation of shared ownership by providing reference counted types such as \texttt{Rc} or \texttt{Arc}. These special types are necessary due to the ownership concepts already introduced where a value can only have one owner at a time. But because moving and simple references do not work or cannot be checked for validity, reference counting is the way Rust implemented for shared ownership. So if a resource has to be shared among threads, it often is wrapped into an \texttt{Arc}, standing for atomic reference counted. Whenever another thread needs an instance of the wrapped data, the whole \texttt{Arc} is cloned, bumping its reference count by one. If all threads terminated and the reference count drops below one, it is dropped. These behavior is similar to smart pointer types, such as \texttt{shared\_ptr} or \texttt{unique\_ptr}, used in C++. This also prevents common concurrency bugs because the data inside an \texttt{Arc} is immutable. How resources are shared in a mutable way is described in the following section.
+
+\subsection{Mutable shared state}
+
+Multiple concurrent threads working on a mutable resource is a situation, that requires fine-grained access control to avoid critical bugs. Rust provides a system programmer with familiar concepts naming mutexes, conditional variables and atomics. These, so called \textit{synchronization primitives}, allow the programmer to synchronize the access of a mutable resource. In order to show some differences between the Rust approach and the one of other languages the \textit{mutex} primitive is described in more detail.
+
+\subsubsection{Mutex}
+
+A mutex is a synchronization primitive that guards resource or section of code from being accessed by more than one thread. The section that is protected by a mutex, or a lock in general, is referred to as a \textit{critical section}. Beside being used for thread synchronization, mutexes can be used for \ac{IPC} by using their named variants. A named mutex is visible across all processes of the \ac{OS} allowing them to communicate by changing its state. Using such a primitive in a language is nothing new and C++ also has an implementation in its standard library. A basic example of a C++ mutex can be seen in Listing \ref{lst:cpp_mutex} below. The code sample is simplified on purpose to show the usage of a mutex, though the global variables and meaningless mutation function.\\
+
+\begin{lstlisting}[caption={Usage of a std::mutex to guard a critical section in C++}, label={lst:cpp_mutex}, language=C++]
+std::mutex g_resource_mutex;
+std::vector<int> g_shared_resource;
+
+void mutate_shared_state() 
+{
+	g_resource_mutex.lock(); // Enter the critical section
+	g_shared_resource.push(42);
+	g_resource_mutex.unlock(); // Leave the critical section
+}
+
+int main()
+{
+	std::thread thread_1(mutate_shared_state);
+	std::thread thread_2(mutate_shared_state);
+	
+	thread_1.join();
+	thread_2.join();
+}
+\end{lstlisting}
+
+\noindent
+As the code sample above shows the mutex has to be locked and unlocked explicitly by the programmer whenever a shared resource is mutated. That section is only allowed to be run by a single thread at a time and every other one that tries to acquire the lock will be suspended and wait until the mutex is unlocked. Because a mutex is often strictly associated with an object or a resource, Rust came up with a slightly different \ac{API} for it, again turning an already commonly used implicit pattern into an explicit one. In Rust, the mutex wraps the data it protects and it can only be retrieved through the acquired lock. Therefore there is know way that the lock acquisition can be forgotten when the mutable resource is accessed. Listing \ref{lst:rust_mutex} shows how a mutex is created in Rust and how the data is retrieved by locking it.\\
+
+\begin{lstlisting}[caption={Usage of a std::sync::Mutex to guard a shared resource in Rust}, label={lst:rust_mutex}, language=C++]
+let guarded_vec: Mutex<Vec<i32>> = Mutex::new(vec![]);
+
+// Somewhere in the concurrent function, accessing guarded_vec
+let mut lock_guard = guarded_vec.lock().unwrap();
+lock_guard.push(42);
+\end{lstlisting}
+
+\noindent
+Contrary the \texttt{Mutex} in Rust is tightly bound to the resource it protects by wrapping it. Whenever \texttt{lock()} is called in the mutex,it returns a \texttt{MutexGuard} that is just a simple abstraction over a mutable reference to the wrapped type. Due to explicit implemented coercion traits on the mutex, it is possible to directly call methods of the wrapped type on the guard itself. A lock is then automatically released whenever the guard goes out of scope or if it is dropped manually, after access to the resource is not needed anymore.
+
+\subsection{Channels - IF NEEDED ONLY}
 \blindtext
-\subsection{Data races}
-\blindtext
-\section{Traits}
-\blindtext
-\section{Modules}
-\blindtext
-\section{Generics}
-\blindtext
-\section{Hygienic macros}
-\blindtext
+
+\section{Polymorphism}
+
+Polymorphism is a concept that is part of many programming languages for many years. In Rust it is implemented by \textit{traits} and \textit{generics}. While traits are a concept similar to interfaces or abstract base classes in C\# or C++ and allow for run-time polymorphism, generics are similar to C++'s templates, hence allowing for polymorphic behavior at compile-time. The following two sections are going to show how traits and generics work and how they are used in Rust.
+
+\subsection{Traits}
+
+A trait can be described as a set of functionality or features that a type, that is implementing it, supports. Traits are a powerful object to describe the capabilities of a type and combined with generics they can also be used to restrict the types that can be used with generic functions.\\
+
+\begin{lstlisting}[caption={Example usage of a trait and a type implementing it}, label={lst:rust_trait}, language=C++]
+
+trait ReadBuffer {
+	fn read(&self, len: usize) -> Vec<u8>;
+	fn valid(&self) -> bool; 
+}
+
+struct FileBuffer {
+	buffer: [0; 100],
+}
+
+impl ReadBuffer for FileBuffer {
+	fn read(&self, len: usize) -> Vec<u8> {
+		// details omitted ...
+	}
+	
+	fn valid(&self) -> bool {
+		// details omitted ...
+	}
+}
+\end{lstlisting}
+
+\noindent
+Listing \ref{lst:rust_trait} shows the trait \texttt{ReadBuffer} that exposes an interface to read values and to query for validity. The trait is then implemented for the distinct type \texttt{FileBuffer}, which implements the trait's methods to fulfill the purpose they describe. Now every instance of a \texttt{FileBuffer} provides the interface of the implemented trait. If another type would also implement the trait for itself, a function could take references to types implementing it while not needing to care what type exactly was passed to it. The code sample below shows a function that can work with any type that implements the specified trait. If a reference to any type implementing a trait is used it is called a \textit{trait object}.\\
+
+\begin{lstlisting}[caption={A function, taking a trait object}, label={lst:rust_trait_object}, language=C++]
+using ReadBuffer;
+
+// 1) Calling read() on a trait object, every type that implements ReadBuffer (dynamic dispatch)
+fn read_bytes(read_buffer: &ReadBuffer, length: usize) {
+	let content = read_buffer.read(length);
+}
+
+// 2) Callind read() on a distinct type implementing ReadBuffer (static dispatch)
+let file_buffer: FileBuffer = FileBuffer::new(file);
+let content = file_buffer.read(100);
+\end{lstlisting}
+
+\noindent
+Listing \ref{lst:rust_trait_object} shows two ways to invoke the trait's method on a type implementing it. In section one a function is taking a \texttt{\&ReaderBuffer}, called a \textit{trait object}, as argument. Trait object is the common term for a reference to a trait type. Because when using this approach the type behind the reference cannot be known at compile-time, Rust needs to store some additional information in order to call the right function. Behind the scenes, when using a trait object, a \textit{dynamic dispatch} is performed. To do a trait object is represented as a \textit{fat pointer}, containing the data and a so called \textit{virtual table pointer}, in memory. The virtual table pointer, or \textit{vptr} for short, contains information about the type behind the object. The concept is rather similar the one of C++ beside the fact that the \textit{vptr} is not part of the struct itself. This allows even types, that would otherwise be too small to hold an additional pointer, to implement traits.\\
+
+\begin{figure}[h!]
+	\centering \includegraphics[width=\linewidth]{PICs/rust_vtable.png}
+	\caption{Internal layout of a trait object in Rust. Dark grey parts are part of the vtable and only created once at compile-time}
+	\label{fig:rust_vtable}
+\end{figure}
+
+\noindent
+The above figure visually shows the described layout of a trait object. The image uses a trait called \texttt{Write} instead of the previously used \texttt{ReadBuffer}. The dark gray parts mark the parts that are hidden form the programmer. The vtable is created once for each type at compile-time and whenever a trait method is called via a trait object a lookup into the vtable is performed to find the location of the distinct type's implementation. As the interested reader now might already has guessed, calling methods through trait objects introduce an overhead.
+That overhead can be avoided whenever the type of the trait's implementor is known upfront. If that is the case, as it is in Listing \ref{lst:rust_trait_object} in the second part of the code, the trait method can be called directly which is as fast as calling any other method.
+
+\subsection{Generics}
+
+Whereas traits and trait objects allow for runtime polymorphism, generics, similar to C++ templates, do the same at compile-time. By using \textit{type parameters} functions and structs can be turned into generic versions, usable with different types. One of the most popular examples of generic code is \texttt{Vec<T>} that works with many different types. The \texttt{T} in the type definition can be replaced by others, such as \texttt{Vec<u8>} or \texttt{Vec<String>}, allowing the vector to be adapted to the programmer's needs. Whenever the compiler discovers a type parameter for the vector it has now previously seen, it copies all of the vector's code with the T being replaced by the distinct type. This process is called \textit{Monomorphization} and also applies to generic functions.\\
+
+\begin{lstlisting}[caption={A generic function in Rust showcasing trait bounds}, label={lst:rust_generic_code}, language=C++]
+using ReadBuffer;
+using std::fmt::Debug;
+
+// Generic function with simple trait bound
+fn read_from_buffer<T: ReadBuffer>(buffer: &mut T, len: usize) {
+	let content = buffer.read(len);
+	// ...
+}
+
+// Generic function, more complex trait bound
+fn read_from_buffer_debug<T: ReadBuffer + Debug>(buffer: &mut T, len: usize) {
+	let content = buffer.read(len);
+	// ...
+}
+\end{lstlisting}
+
+\noindent
+Listing \ref{lst:rust_generic_code} above shows how generic functions can be declared. A feature not mentioned until now is the possibility of adding \textit{trait bounds} to a type parameter. A trait bound serves the purpose of requiring certain functionalities the types supplied to the generic function has to provide. Here can be a single trait or multiple once concatenated by a \texttt{+}. Whenever a type does not fulfill the bound it will raise a compiler error notifying the programmer about an unsatisfied trait boundary.
+
+\section{Crates \& Modules}
+
+The last feature of Rust that is going to be described in this chapter is the way Rust handles dependencies and structures code, both between different projects and in a single one. When coming from a C++ background the common way to structure a project is to generate different header files and include them wherever they are needed. While techniques such as include guards, checking that no file is included more than once per compilation unit, reduce errors made by programmers, adding several libraries to a project can get cumbersome quite fast. In the C++ world, when a library shall be added to the project, a programmer needs to add the include files first and then link against the necessary libraries. 
+
+Contrary to this, Rust uses \textit{crates}, for sharing code between projects, and \textit{modules} for structuring code in one project. 
+
+\subsection{Crates}
+
+A crate is described as the collection of everything related to a single Rust project containing all source code, tests, examples, tools and so on. A Rust project can be dependent onto other crates that can be either come from \url{crates.io} or the same project. Then, when a Rust project is built with cargo, it fetches all dependencies first, compiling them with rustc into \textit{.rlib} files and then later statically linking them into the program. When using an external crate this is simply done by adding a \texttt{extern crate CRATE\_NAME} directive to the top of the project's main file and bring the necessary module into scope with the \texttt{use} keyword.
+
+\subsection{Modules}
+
+Where crates are used to share and manage dependencies between projects, withing a single one there are \textit{modules} to organize the code. A project can include multiple modules that can contain other ones or items, such as functions, types, variables and others. Modules can be compared to namespaces of other languages, serving as containers for logically grouped items. Modules are created with the \texttt{mod} keyword and can be nested into other ones. Additionally to the logical grouping, modules explicitly specify the visibility of contained items with either marking them as \texttt{pub} or not. Being marked as publicly visible allows the parts of the module to be used when the crate it contains is used, otherwise the non marked parts are just visible to the current module. Because modules can also be separated into several files, they are of great use when the size of a project grows and to design a meaningful \ac{API} for the user of the crate.
+
 \section{Missing or unstable features}
-\blindtext
+
+Although Rust already provides many useful and important features a system programming language needs, the author recognized two features, that would have been rather important for the implementation part of the thesis, are currently not implemented or in an unstable stage. This section is going to shortly describe these missing features. It has to be mentioned that the selection is solely subjective in the author's opinion.
+
 \subsection{Const generics}
-\blindtext
+
+While coming from a C++ background the author missed a feature related to generic programming and that is often useful when working with templates in C++. Listing \ref{lst:cpp_const_generics} shows how that feature looks like in the world of C++, where it is called \textit{non-type template parameter}.\\
+
+\begin{lstlisting}[caption={Showcasing template non-type parameters in C++}, label={lst:rust_generic_code}, language=C++]
+template<typename T, size_t N>
+class FixedSizeArray {
+public:
+	T* data();
+	
+private:
+	T m_array[N];
+}
+
+int main() 
+{
+	FixedSizeArray<int, 100> hundredIntsArr;
+	return 0;
+}
+\end{lstlisting}
+
+\noindent
+This above sample shows, how a template parameter, that is not a type, can be used to control the size of the array member. Non-type template parameters are a useful concept in generic programming when a variable parameter is known at compile-time. Unfortunately resembling such a behavior in Rust is currently not possible. There already is a \ac{RFC} and work is done in that field but at the moment there is no workaround to implement a similar approach. A description of that \ac{RFC} and a summary of related problems with the implementation can be found at GitHub under \url{https://github.com/rust-lang/rfcs/blob/master/text/2000-const-generics.md}.
+
 \subsection{Placement-new functionality}
-\blindtext
+
+While the lack of const generics did not have a great impact onto the implementation of the submodules, the lack of a stable and working placement-new feature is rather bad. Placement construction describes a capability where it is possible for the compiler to construct aa value into a provided memory location. In C++, the \texttt{operator new} has a placement syntax, that allows the programmer to specify into which memory region the object shall be constructed.
+
+\begin{lstlisting}[caption={Using placement-new to construct an object in a pre-allocated memory location}, label={lst:cpp_placement_new}, language=C++]
+struct Data { ... };
+
+char memory_buffer[sizeof(Data)];
+Data* data = new (&memory_buffer) Data;
+\end{lstlisting}
+
+In Listing \ref{lst:cpp_placement_new} an instance of \texttt{Data} is constructed into a memory region on the stack by using the operator new with placement syntax. Its existence allows for efficient implementations of memory pools, garbage collectors and certain collection types.
+
+At the beginning of the implementation period for this thesis, Rust had a nighlty feature for providing places where values could be constructed into. But during the first implementation of the memory system (\ref{mem_impl}) it was decided to stop development of it and remove all of its parts from the language. It is the author's opinion that the decision to remove the unstable version was a good one because beside of not being very ergonomic, the feature failed wo work in more cases than it was successful. Where it was capable of constructing a large array in-place it failed as soon as the array was the member of a struct. With this feature being removed from the language it was necessary to redesign the memory system and live with the drawbacks that introduced. One of the biggest disadvantages, that will be described in more detail in the next chapter, is the inability of allocating types that are too big for the stack and the overhead needed to move an object into the provided place instead of it being constructed there.
+
+\section{Conclusion}
+
+While being a rather young language, Rust already provides many features necessary for system programming. Combined with the design of \textit{rustc} and \ac{LLVM} as compiler back-end it is also useful for creating applications on multiple platforms. These two benefits are even more strengthened by the ecosystem and tool-suite that is build to supplement them. With Cargo and \url{crates.io} building applications and sharing them is a well-defined and documented process. With the basics of Rust and its ecosystem described, the next chapter will discuss the implementation details of the engine subsystems that were developed by the author during the process of this thesis.
+

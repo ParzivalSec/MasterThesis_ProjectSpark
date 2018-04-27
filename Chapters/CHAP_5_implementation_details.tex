@@ -166,10 +166,33 @@ With this no overhead data structure in place a user can request an element and 
 
 Additionally to the benefits described above a pool allocator can be enhanced and turned into a growing version. In certain situations it can be useful to have the capability to grow as soon as an allocation request fails because of exhausted memory. The C++ project includes an example implementation of a growing pool allocator that is allowed to grow until it reaches a predefined maximum size constraint. The growing behavior is implemented by using \textit{virtual memory api} provided by the core library.
 
-Although custom allocators can boost an applications performance when used in the right situations, they have limited capabilities for discovering erroneous usage and memory bugs. Because finding such bugs can be hard without any helping utilities the implemented memory feature exposes some debugging capabilities to find common bugs. How they work and which bugs they can find is described in the following section.
+Although custom allocators can boost an applications performance when used in the right situations, they have limited capabilities for discovering erroneous usage and memory bugs. Because finding such bugs can be hard without any helping utilities the implemented memory feature exposes some debugging capabilities to find common bugs. How they work and which bugs they can warn about is described in the following section.
 
 \subsubsection{Bounds checker}
-\blindtext
+
+To harden an engine's memory system it has to prove some mechanism to prevent or at least detect memory bugs. Some of them that can rather easily be detected are memory leaks and stomps. While a memory leaks describes an allocation that was not deallocated and therefore cannot be used anymore, a stomp corrupts or overwrites memory outside of the allocation's range. The author decided to only implement a capability to detect memory stomps in that thesis due to time constraints. It was decided that more time shall be invested into the different allocators and the other subsystems instead.
+
+A technique that is used for detecting memory stomps is called \textit{bounds checking}. One of the simple variants of it is to insert some markers, also called \textit{canaries}, before and after a user's memory block. When the user frees an allocation again, it is checked whether the inserted canaries still hold the marker values or not. If the either one of the front or end canary was corrupted, an assertion is triggered notifying the programmer that a memory stomp has occurred. There are more advanced approaches that check the integrity of all canaries at every allocation and deallocation made, which allows the for faster error detection for the cost of more computational effort. 
+
+\begin{figure}[h!]
+	\centering \includegraphics[width=\linewidth]{PICs/canaries.png}
+	\caption{Top: an allocation wrapped by valid canaries. Bottom: a value was written into the memory, overflowing its bounds and therefore invalidating the back canary.}
+	\label{fig:canaries}
+\end{figure}
+
+\noindent
+The value chosen for the canaries often is one that is not commonly seen in the patterns of other allocations. In the thesis implementation each canary occupies 4 bytes in memory, being implemented by a 32-bit unsigned integer, and the stored marked value is \texttt{0xCA} in hexadecimal. Such a value is also easily detectable when debugging the application and inspecting the memory. Because using an additional bounds checker that wraps every allocation, the memory system has somehow to ensure that a memory block returned by an allocator is aligned although it also needs to provide extra space for the canaries. That's one of the situation why every allocator can take an additional \textit{offset} parameter. When an offset of X bytes is provided, the allocator ensures that there are exactly X bytes space before the aligned pointer. So if an allocation request with an offset of 4 and an alignment of 16 is issues, the allocator returns a memory block that, if offset by 4 bytes, provides an alignment of 16. Figure \ref{fig:offset_alloc} showcases how an allocation with an offset parameter can look like. Because it would be rather unergonomic to have to do this for every allocation done in the whole engine, the later described memory realm will show how to combine allocators and bounds checking to automate this step.
+
+\clearpage
+
+\begin{figure}[h!]
+	\centering \includegraphics[width=\linewidth]{PICs/offset_alloc.png}
+	\caption{Illustrating the structure of a memory block allocated with an offset parameter. To also have space for the second canary, the allocation size if increased by 4 bytes.}
+	\label{fig:offset_alloc}
+\end{figure}
+
+\noindent
+As it can be seen the requested offset bytes are right in front of the aligned pointer that is later handed to the user. Because an additional 4 bytes of space is also needed for the canary at the block's back end, the allocation size has to be increased by 4 bytes to allow the bounds checker to write to that address. 
 
 \subsubsection{Memory realm}
 \blindtext

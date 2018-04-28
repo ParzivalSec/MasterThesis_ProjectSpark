@@ -192,10 +192,75 @@ The value chosen for the canaries often is one that is not commonly seen in the 
 \end{figure}
 
 \noindent
-As it can be seen the requested offset bytes are right in front of the aligned pointer that is later handed to the user. Because an additional 4 bytes of space is also needed for the canary at the block's back end, the allocation size has to be increased by 4 bytes to allow the bounds checker to write to that address. 
+As it can be seen the requested offset bytes are right in front of the aligned pointer that is later handed to the user. Because an additional 4 bytes of space is also needed for the canary at the block's back-end, the allocation size has to be increased by 4 bytes to allow the bounds checker writing to that address. The interface for the bounds checker written in Rust can be seen in Listing \ref{lst:rust_bounds_check}.\\
+
+\begin{lstlisting}[caption={Base trait of every bounds checker in the Rust memory system.}, label={lst:rust_bounds_check}, language={C++}]
+pub trait BoundsChecker {
+	unsafe fn write_canary(&self, memory: *mut u8);
+	fn validate_front_canary(&self, memory: *const u8);
+	fn validate_back_canary(&self, memory: *const u8);
+	fn get_canary(&self) -> u32;
+	fn get_canary_size(&self) -> u32;
+}
+\end{lstlisting}
+
+\noindent
+The same interface is used in the C++ implementation. It has to be mentioned that there are two methods for both canary locations to allow meaningful assert messages when a corrupted value was detected. The next section is going to show a method for combining both every allocation strategy with every implemented bounds checking variant in a flexible and extensible way.
 
 \subsubsection{Memory realm}
-\blindtext
+
+To allow 
+
+
+\begin{lstlisting}[caption={Implementation of the memory realm in C++. Some implementation deatils were omitted (special member functions, ...)}, label={lst:cpp_mem_realm}, language={C++}]
+template <typename Allocator, typename BoundChecker>
+class MemoryRealm : public MemoryRealmBase
+{
+public:
+	explicit MemoryRealm(size_t bytes)
+	: m_allocator(bytes)
+	{}
+	
+	template<typename MemoryProvider>
+	explicit MemoryRealm(MemoryProvider& memoryProvider)
+	: m_allocator(memoryProvider.start(), memoryProvider.end())
+	{}
+	
+	void* Alloc(size_t bytes, size_t alignment) override
+	{
+		const size_t totalMemory = m_boundsChecker.CANARY_SIZE + bytes + m_boundsChecker.CANARY_SIZE;
+		
+		char* memory = static_cast<char*>(m_allocator.Alloc(totalMemory, alignment, m_boundsChecker.CANARY_SIZE));
+		
+		m_boundsChecker.WriteCanary(memory);
+		m_boundsChecker.WriteCanary(memory + m_boundsChecker.CANARY_SIZE + bytes);
+		
+		return memory + m_boundsChecker.CANARY_SIZE;
+	}
+	
+	void Dealloc(void* memory) override
+	{
+		char* allocatorMemory = static_cast<char*>(memory) - m_boundsChecker.CANARY_SIZE;
+		
+		m_boundsChecker.ValidateFrontCanary(allocatorMemory);
+		const uint32_t allocationSize = static_cast<uint32_t>(m_allocator.GetAllocationSize(allocatorMemory));
+		m_boundsChecker.ValidateBackCanary(allocatorMemory + m_boundsChecker.CANARY_SIZE + allocationSize);
+		
+		m_allocator.Dealloc(allocatorMemory);
+	}
+	
+	void Reset(void) override
+	{
+		m_allocator.Reset();
+	}
+	
+	~MemoryRealm() = default;
+
+private:
+	Allocator m_allocator;
+	BoundChecker m_boundsChecker;
+};
+\end{lstlisting}
 
 \subsection{C++ implementation}
 \blindtext

@@ -21,9 +21,6 @@ As it can be seen in the illustration above, the application used for benchmarki
 
 After the global architecture of the implementation was described this sections gives an insight into the development process of it. During the whole implementation period the author followed a test-driven approach for implementing features. Without going into much detail right now, it can be said that for every feature created there were several test cases developed beforehand describing the preferred usage and expected behavior of the \ac{API}. Exact details of this are described in section \ref{tdd}, which also describes what frameworks were used and what benefit can be gained by implementing tests. Because Rust is rather young and so is the \ac{IDE} world around it, the first part of this section will shortly explain which tools were used and how they compare to the ones used in C++, a mature language with a well-grown tooling landscape.
 
-\subsection{Project environment}
-
-
 \subsubsection{Spark++ - the C++ project}
 
 With Windows as the development \ac{OS} the straight forward \ac{IDE} choice for the C++ project was Visual Studio 2017. Because it is planned to develop the systems for multiple platforms in the future, \textit{premake} was used to create \ac{IDE} projects for the different platforms. \textit{Premake} is a build configuration system used for generating project files for Visual Studio, XCode or other \acp{IDE}. When creating configuration files with premake, one uses \textit{Lua}, a well-known scripting language in the gaming industry. An excerpt of the build configuration used for the C++ project can be seen in Listing \ref{lst:premake5_conf}.\\
@@ -56,15 +53,13 @@ The above script shows how the project for the memory system is setup. The descr
 
 Before the author settled for Visual Studio Code as the \ac{IDE} for Rust, there was an attempt on using Visual Studio too. But after a view hours of trying to work with the Rust plugin for it, developed by parts of the Piston engine community, the author decided to switch to \textit{VS Code}. That decision was based upon experiences of other Rust users and due to the author's experience with the Rust plugin. When using \textit{VS Code} a programmer benefits from useful extensions for Rust development and the usage of a tool called \textit{Racer}. Racer can be found at \url{https://github.com/racer-rust/racer} and is a utility for Rust code completion, boosting productivity and helps Rust newcomers. The build process was then totally done via \textit{Cargo's} exposed functionality. 
 
-\subsection{Test-driven development} \label{tdd}
+\subsubsection{Test-driven development} \label{tdd}
 
 Another important part of the development process, apart tooling that supports the programmer, was the decision to follow a test-driven approach. The term \textit{test-driven development} in the context of the subsystem implementation describes the process of defining the wanted behavior in test cases and then implement functionality to pass these tests. For every feature several unit-tests were implemented to ensure that the behavior of small, separated parts of the software meet expectations. Beside the benefit of a structured development process another advantage of a well-maintained test-suite is the possibility to catch regressions introduced when altering or refactoring code. This safe-guard proved useful more than once during the development process and ensured that the behavior did not change when refactoring code or moving reusable functionality into the core library. The tests for the C++ project were implemented using the \textit{Google Test Framework} that proved to be quite easy to integrate while providing direct integration into Visual Studio. The tests of the Rust project where implemented directly in the different module files and were executed via the \texttt{cargo test} command. The fact that Rust projects come with an unit-test runner out-of-the-box is a great benefit for productivity and maintainability of code. 
 
 \section{Memory Management} \label{mem_impl}
 
 The first implemented submodule that is going to be described is the memory management system. As it was already mentioned in section \ref{mem_theory}, an engine's memory management system is responsible to provide control over how resources are used at runtime. It tries to reach peek performance by assuming access patterns and providing different allocation strategies. Beside that is important to provide debugging facilities, especially when working with pointers and raw memory. This section will first describe the general \ac{API} and from which parts the module is composed of. It will then highlight some interesting implementation details of both languages with code samples.
-
-\subsection{API}
 
 The design decisions for parts of the memory system are based on resources hosted at \textit{Stefan Reinalter's} blog \textit{Molecular Musings} \cite{MOL_MS_1} \cite{MOL_MS_2} \cite{MOL_MS_3} \cite{MOL_MS_4} \cite{MOL_MS_5} and on allocation strategies described in the book \textit{Game Engine Architectures} \cite{GEA_2}. The implementation for both languages share a common \ac{API} and at least the same system members. On top of that the Rust implementation features an additional abstraction layer to showcase how a safe interface for unsafe code can be built in Rust. The system is structured into the following parts:
 
@@ -75,10 +70,10 @@ The design decisions for parts of the memory system are based on resources hoste
 	debugging facilities with allocation policies - flexible and policy-based approach
 \end{labeling}
 
-\subsubsection{Virtual memory}
+\subsection{Virtual memory}
 \blindtext
 
-\subsubsection{Allocators}
+\subsection{Allocators}
 
 The different allocation strategies implemented serve as the module's basis. In order to allow a user to store them in a polymorphic way, all of them share a common interface. This interface is implemented as a pure virtual class in C++ and as a trait in Rust. The \ac{API} all of them share is shown in Listing \ref{lst:mem_api}. Although it showcases the C++ methods, the Rust trait only differs syntactically.\\
 
@@ -168,7 +163,7 @@ Additionally to the benefits described above a pool allocator can be enhanced an
 
 Although custom allocators can boost an applications performance when used in the right situations, they have limited capabilities for discovering erroneous usage and memory bugs. Because finding such bugs can be hard without any helping utilities the implemented memory feature exposes some debugging capabilities to find common bugs. How they work and which bugs they can warn about is described in the following section.
 
-\subsubsection{Bounds checker}
+\subsection{Bounds checker}
 
 To harden an engine's memory system it has to prove some mechanism to prevent or at least detect memory bugs. Some of them that can rather easily be detected are memory leaks and stomps. While a memory leaks describes an allocation that was not deallocated and therefore cannot be used anymore, a stomp corrupts or overwrites memory outside of the allocation's range. The author decided to only implement a capability to detect memory stomps in that thesis due to time constraints. It was decided that more time shall be invested into the different allocators and the other subsystems instead.
 
@@ -207,12 +202,11 @@ pub trait BoundsChecker {
 \noindent
 The same interface is used in the C++ implementation. It has to be mentioned that there are two methods for both canary locations to allow meaningful assert messages when a corrupted value was detected. The next section is going to show a method for combining both every allocation strategy with every implemented bounds checking variant in a flexible and extensible way.
 
-\subsubsection{Memory realm}
+\subsection{Memory realm}
 
-To allow 
+With allocators and bounds checking facilities in place, the memory system needs a way to expose them to a user in an ergonomically way. Although the different parts can already be used without any further abstraction, that way would be rather unergonomic for a programmer to use. In order to expose a more robust and flexible \ac{API}, the memory system contains \textit{memory realms}. This type is an abstraction put on top of allocators and bounds checking to combine them. Both, C++ and Rust, make use of generic code to implement the memory realm. Listing \ref{lst:cpp_mem_realm} shows a partial implementation lacking some details about special member functions. \\
 
-
-\begin{lstlisting}[caption={Implementation of the memory realm in C++. Some implementation deatils were omitted (special member functions, ...)}, label={lst:cpp_mem_realm}, language={C++}]
+\begin{lstlisting}[caption={Implementation of the memory realm in C++. Some implementation deatils were omitted.)}, label={lst:cpp_mem_realm}, language={C++}]
 template <typename Allocator, typename BoundChecker>
 class MemoryRealm : public MemoryRealmBase
 {
@@ -262,23 +256,132 @@ private:
 };
 \end{lstlisting}
 
-\subsection{C++ implementation}
-\blindtext
-\subsection{Rust implementation}
-\blindtext
+\noindent
+The code sample shows that a realm takes two template parameters defining the allocator and bounds checker used. An advantage of this design, also being named \textit{policy-based design}, is that each realm can be rather easily configured to use every allocator and every bounds checker, if they adhere to the same interface. To give an example, one memory realm could use a linear allocator with canary-based bounds checking during development and is exchanged by a realm using the same linear allocator but with a bounds checker that only has no-op methods. The bounds checker used in release implemented each of its methods empty, allowing the called functions to yield a no-op when being compiled for release or retail mode. With this approach a user can define memory arenas in a flexible way, creating the ones fitting a certain use case. This approach could even be enhanced, as Stefan Reinalter also describes in his blog \cite{MOL_MS_5}, by adding facilities for handling multi-threaded access and memory tracking. These parts can then also be added as template parameters and increase the possibilities a programmer has.
+
+While the C++ implementation uses templates, the Rust approach is based upon the feature of \textit{generics}. Combined with traits the Rust implementation allows for also constraining the passed types and force them to implement a certain interface. Although that functionality would also be implementable in C++, Rust includes it in its core language, while the C++ mechanism would be a custom creation (\textit{type traits} or \textit{concepts}). In Listing \ref{lst:rust_trait_bound_basic} \& \ref{lst:rust_trait_bound_typed} it can be seen Rust's trait bounds can be useful when implementing a generic abstraction where an used type has to provide certain functionality defined by an interface.\\
+
+\begin{lstlisting}[caption={Rust interface of the basic memory realm allowing only basic allocators.}, label={lst:rust_trait_bound_basic}, language={C++}]
+pub struct BasicMemoryRealm<A: Allocator + BasicAllocator, B: BoundsChecker + Default> {
+	allocator: A,
+	bounds_checker: B,
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Rust interface of the typed memory realm.}, label={lst:rust_trait_bound_typed}, language={C++}]
+pub struct TypedMemoryRealm<A: Allocator + TypedAllocator, B: BoundsChecker + Default> {
+allocator: A,
+bounds_checker: B,
+}
+\end{lstlisting}
+
+\subsection{Idiomatic Rust implementation}
+
+While the C++ implementation returns raw pointers and indicates error states with a \texttt{nullptr}, the Rust project features a safe wrapper around allocations to also showcase an approach using idiomatic Rust principles. To allow the system to be used in safe Rust, the author needed a way to somehow make the allocation \ac{API} more robust and safe. To reach this goal, the \texttt{Box} type of the standard library served as a reference. A \texttt{Box} is a way to heap allocate in Rust and it follows the \ac{RAII} idiom as many other Rust implementations. Because the current version of the language does not feature custom allocators in a stable way, the author implement a custom type calls \texttt{AllocatorBox}. It was responsible for managing the allocated memory block and to free it properly when it is dropped. To do so it needed to hold a reference to the allocator the memory block comes from the the block itself. This also ensures, that an allocation can not live longer than the allocator it came from due to Rust's lifetime rules and the borrow checker.\\
+
+\begin{lstlisting}[caption={AllocatorBox abstraction to allow \ac{RAII} management of allocations.}, label={lst:rust_allocator_box}, language={C++}]
+pub struct AllocatorBox<'a, T: 'a + ?Sized, A: 'a + Allocator + ?Sized> {
+	instance: Unique<T>,
+	allocator: &'a A,
+}
+
+// ...
+
+impl<'a, T: ?Sized, A: Allocator + ?Sized> Drop for AllocatorBox<'a, T, A> {
+fn drop(&mut self) {
+	unsafe {
+		intrinsics::drop_in_place(self.instance.as_ptr());
+		self.allocator.dealloc_raw(MemoryBlock::new(self.instance.as_ptr() as *mut u8));
+	}
+}
+
+\end{lstlisting}
+
+\noindent
+Listing \ref{lst:rust_allocator_box} showcases the members of an \texttt{AllocatorBox}. It uses the \texttt{Unique} type to indicate that it is the only owner over the value and a reference to the allocator the memory block came from. At the bottom it can be seen how the \texttt{Drop} trait is implemented and what happens when an \texttt{AllocatorBox} goes out of scope. The owned instance is dropped and then a memory block is created from the owned pointer. That block is handed back to the allocator it came from, properly releasing memory as soon as it is not needed anymore. 
+
+\newpage
+
 \section{Containers} \label{container_impl}
+
+With the memory system as a quite low-level one, the second part of the implementation section focuses on a slightly more high-level library featuring three different kind of containers. A container serves the purpose of holding several elements, allowing to add and access them. The author decided to implement the following three collections, all of them capable of being used at runtime or for implementing tools.
+
+\begin{labeling}{handle map}
+	\item [vector] dynamically size array, storing elements in a contiguous memory block
+	\item [handle map] collection that internally stores items contiguous in memory 
+	while external handles to them will be kept intact
+	\item [ringbuffer] collection allowing for reading and writing to it
+	with the capability of wrapping around at the end
+\end{labeling}
+
+The following sections will each describe how the collection works and how it was implemented in C++ and Rust.
+
+\subsection{Vector}
+
+A vector is a collection most typically found in the standard library of most programming languages. With \texttt{std::vector<T>} and \texttt{Vec<T>}, both C++ and Rust, already provide an implementation to be used by a programmer. This collection can also be described as an array that is able to grow on demand. So while it is preferable to use fixed-size arrays due to reasons such as memory waste, book-keeping overhead and performance, there are some situations where the required size of an array cannot be known at compile-time. That are the situations where a vector is the tool of choice. But why is there the need for implementing such a collection if the languages already provide one? The reason is, as often in the world of game engines, performance. Standard library collections fulfill the need of being portable and that's the reason why there are several ways how the performance of them can be improved when certain unknowns are replaced by the knowledge of a machine's capabilities and usage patterns. 
+
+The difference between standard library implementations and the one chosen by the author is the way the collection retrieves its memory and how the growth is handled. Vectors commonly use the languages default memory allocation system to allocate space for its elements. While normally this is not a problem, it can become one as soon as the vector's current capacity is exhausted. During this situation, the vector allocates a new space that is bigger than the current one, moves all elements into that space and frees the old one. This can be either done by using allocation capabilities such as \texttt{realloc}, provided by the default allocator, or manually. Both of these approaches can lead to the problem that for a short time, the old and the new memory block are allocated at the same time, wasting memory until the old one is freed. The chosen implementation aims to avoid this problem by using the virtual memory system of the \ac{OS} to allocate and free space.
+
+\subsubsection{Spark Vector}
+
+Contrary to the standard libraries vectors, the one implemented for Spark only allocates its memory via the virtual memory system of the \ac{OS}. When a new one is created, it reserves virtual address space up to one \ac{GB}. Due to that fact the implementation is only useful on 64-bit platforms to the bigger address space available on them. Whenever elements are added, or pushed, to the vector, a check is performed whether it needs to grow or not. If the check results that growing the collection is necessary, physical pages meeting the required capacity are committed. And here lies the different to the standard vector implementation. While normally in this situation memory usage could nearly be doubled, Spark's vector does not need to allocate or reallocate a new block. Because all of the already reserved virtual address space lies contiguous in memory, relocation of the previously owned elements is not needed and the new elements are just appended at the end of the already committed pages.\\
+
+\begin{figure}[h!]
+	\centering \includegraphics[width=\linewidth]{PICs/vector_growth.png}
+	\caption{Illustrating the growing process of Spark's vector.}
+	\label{fig:vector_growth}
+\end{figure}
+
+\noindent
+A visual description of the vector growth can be seen in Listing \ref{fig:vector_growth}. The figure shows the situation where a new element is added to an already exhausted vector. To fit the element into the collection, another range of memory pages is committed. The amount of the newly allocated capacity is determined by fixed growing rules, ranging from twice the current size to more exotic growth patterns. What exactly is done during the growing process of the vector can be seen in Listing \ref{lst:vector_growth}. This code sample shows how the \texttt{grow} method is implemented in Rust. The C++ function is now shown because they logically work in the same way only differing in syntax.\\
+
+\begin{lstlisting}[caption={Growth function of the Spark vector in Rust.}, label={lst:vector_growth}, language={C++}]
+fn grow(&mut self, bytes: usize) {
+	{
+		let virtual_address_space_exhausted = self.internal_array_begin.as_ptr() as *mut u8 == self.virtual_mem_end;
+		debug_assert!(!virtual_address_space_exhausted, "Not enough address space to grow further");
+	}
+	
+	let page_bytes_to_grow = math_util::round_to_next_multiple(bytes, virtual_mem::get_page_size());
+	
+	let is_enough_space_for_requested_pages = unsafe { self.internal_array_end.offset(page_bytes_to_grow as isize) <= self.virtual_mem_end };
+	let grow_by_bytes = if is_enough_space_for_requested_pages {
+		page_bytes_to_grow
+	}
+	else {
+		let remaining_virtual_address_space = self.virtual_mem_end as usize - self.internal_array_end as usize;
+		math_util::round_to_previous_multiple(remaining_virtual_address_space, virtual_mem::get_page_size())
+	};
+	
+	let ptr = match { virtual_mem::commit_physical_memory(self.internal_array_end, grow_by_bytes) } {
+		None => ptr::null_mut(),
+		Some(mem) => mem,
+	};
+	
+	if ptr.is_null() {
+		debug_assert!(true, "Vector run out of memory due to an unknow error");
+	}
+	
+	self.internal_array_end = unsafe { ptr.offset(grow_by_bytes as isize) };
+	self.capacity = self.capacity + (grow_by_bytes / mem::size_of::<T>());
+}
+\end{lstlisting}
+
+\noindent
+While growing a vector is normally straight forward, there is a an edge case if the demanded capacity is not covered by available address space. If this situation occurs the vector does not assert or fail, but allocates all available pages until the end. That is the only case where the defined growing rule is ignore to utilize the available memory limits till the maximum. At the end, if committing the physical pages succeeded, the internal state, including current array end and capacity, is updated. It has to be mentioned that due to the virtual memory system, the vector can only grow in a multiple of the \ac{OS}'s page size.
+
+\subsection{Handle Map}
 \blindtext
-\subsection{API}
+\subsection{Ringbuffer}
 \blindtext
-\subsection{C++ implementation}
-\blindtext
-\subsection{Rust implementation}
-\blindtext
+
 \section{Entity Component System} \label{ecs_impl}
 \blindtext
-\subsection{API}
+\subsection{SPECS}
 \blindtext
-\subsection{C++ implementation}
+\subsection{Entities \& Components}
 \blindtext
-\subsection{Rust implementation}
+\subsection{World}
+\blindtext
+\subsection{Systems}
 \blindtext

@@ -353,15 +353,13 @@ Listing \ref{lst:rust_generic_code} above shows how generic functions can be dec
 
 \section{Crates \& Modules}
 
-The last feature of Rust that is going to be described in this chapter is the way Rust handles dependencies and structures code, both between different projects and in a single one. When coming from a C++ background the common way to structure a project is to generate different header files and include them wherever they are needed. While techniques such as include guards, checking that no file is included more than once per compilation unit, reduce errors made by programmers, adding several libraries to a project can get cumbersome quite fast. In the C++ world, when a library shall be added to the project, a programmer needs to add the include files first and then link against the necessary libraries. 
+The last feature of Rust that is going to be described in this chapter is the way Rust handles dependencies and structures code, both between different projects and in a single one. When coming from a C++ background the common way to structure a project is to generate different header files and include them wherever they are needed. While techniques such as include guards, checking that no file is included more than once per compilation unit, reduce errors made by programmers, adding several libraries to a project can get cumbersome quite fast. In the C++ world, when a library shall be added to the project, a programmer needs to add the include files first and then link against the necessary libraries. Contrary to this, Rust uses \textit{crates}, for sharing code between projects, and \textit{modules} for structuring code in one project. 
 
-Contrary to this, Rust uses \textit{crates}, for sharing code between projects, and \textit{modules} for structuring code in one project. 
-
-\subsection{Crates}
+\subsubsection{Crates}
 
 A crate is described as the collection of everything related to a single Rust project containing all source code, tests, examples, tools and so on. A Rust project can be dependent onto other crates that can be either come from \url{crates.io} or the same project. Then, when a Rust project is built with cargo, it fetches all dependencies first, compiling them with rustc into \textit{.rlib} files and then later statically linking them into the program. When using an external crate this is simply done by adding a \texttt{extern crate CRATE\_NAME} directive to the top of the project's main file and bring the necessary module into scope with the \texttt{use} keyword.
 
-\subsection{Modules}
+\subsubsection{Modules}
 
 Where crates are used to share and manage dependencies between projects, withing a single one there are \textit{modules} to organize the code. A project can include multiple modules that can contain other ones or items, such as functions, types, variables and others. Modules can be compared to namespaces of other languages, serving as containers for logically grouped items. Modules are created with the \texttt{mod} keyword and can be nested into other ones. Additionally to the logical grouping, modules explicitly specify the visibility of contained items with either marking them as \texttt{pub} or not. Being marked as publicly visible allows the parts of the module to be used when the crate it contains is used, otherwise the non marked parts are just visible to the current module. Because modules can also be separated into several files, they are of great use when the size of a project grows and to design a meaningful \ac{API} for the user of the crate.
 

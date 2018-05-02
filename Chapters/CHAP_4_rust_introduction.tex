@@ -265,9 +265,6 @@ lock_guard.push(42);
 \noindent
 Contrary the \texttt{Mutex} in Rust is tightly bound to the resource it protects by wrapping it. Whenever \texttt{lock()} is called in the mutex,it returns a \texttt{MutexGuard} that is just a simple abstraction over a mutable reference to the wrapped type. Due to explicit implemented coercion traits on the mutex, it is possible to directly call methods of the wrapped type on the guard itself. A lock is then automatically released whenever the guard goes out of scope or if it is dropped manually, after access to the resource is not needed anymore.
 
-\subsection{Channels - IF NEEDED ONLY}
-\blindtext
-
 \section{Polymorphism}
 
 Polymorphism is a concept that is part of many programming languages for many years. In Rust it is implemented by \textit{traits} and \textit{generics}. While traits are a concept similar to interfaces or abstract base classes in C\# or C++ and allow for run-time polymorphism, generics are similar to C++'s templates, hence allowing for polymorphic behavior at compile-time. The following two sections are going to show how traits and generics work and how they are used in Rust.
@@ -367,7 +364,7 @@ Where crates are used to share and manage dependencies between projects, withing
 
 Although Rust already provides many useful and important features a system programming language needs, the author recognized two features, that would have been rather important for the implementation part of the thesis, are currently not implemented or in an unstable stage. This section is going to shortly describe these missing features. It has to be mentioned that the selection is solely subjective in the author's opinion.
 
-\subsection{Const generics}
+\subsection{Const generics} \label{rust_const_generics}
 
 While coming from a C++ background the author missed a feature related to generic programming and that is often useful when working with templates in C++. Listing \ref{lst:cpp_const_generics} shows how that feature looks like in the world of C++, where it is called \textit{non-type template parameter}.\\
 

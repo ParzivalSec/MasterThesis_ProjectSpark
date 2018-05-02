@@ -370,18 +370,231 @@ fn grow(&mut self, bytes: usize) {
 \noindent
 While growing a vector is normally straight forward, there is a an edge case if the demanded capacity is not covered by available address space. If this situation occurs the vector does not assert or fail, but allocates all available pages until the end. That is the only case where the defined growing rule is ignore to utilize the available memory limits till the maximum. At the end, if committing the physical pages succeeded, the internal state, including current array end and capacity, is updated. It has to be mentioned that due to the virtual memory system, the vector can only grow in a multiple of the \ac{OS}'s page size.
 
-\subsection{Handle Map}
-\blindtext
+\subsection{Handle Map} \label{handle_map_impl}
+
+The second collection that was implemented is called a \textit{Handle Map} or a \textit{Dense-Sparse Set}. Other collections often come with the disadvantage that either elements will not be contiguous in memory after deleting some of them or pointers to them are invalidated if the collection is able to reorder them to avoid holes. This collection solves this problem by handing out ids or so called \textit{handles}. They are used to refer to some item in the collection instead of raw pointers. With that technique it is possible to reorder the internal array of items to keep them contiguous while also upholding already existing handles to them. In order to achieve this behavior the handle map contains three different internal arrays. 
+
+One of them is the \textit{sparse array}, holding handles. A handle is simply a 64-bit unsigned integer for the user. Internally it is interpreted as an index into the sparse set (4 bytes) and a \textit{generation} part (4 bytes). The generation is important when requesting the item behind a handle to discover old references. Because handles are reused and array index can be used more than once and to ensure that no invalid or old handle can request an item, the generation of that exact handle is increased with every removing operation to deprecate all previously returned handles. 
+
+The second array used is called the \textit{dense set} and holds objects stored by the collection. This array arranges its element to line up in memory and therefore yield better performance when iterating them due to good cache utilization. Figure \ref{fig:handle_map} shows the two array described until now and how they relate to each other.
+
+\begin{figure}[h!]
+	\centering \includegraphics[width=\linewidth]{PICs/handle_map.png}
+	\caption{Sparse and dense array of the handle map. Relations defined by the indexes are described by arrows.}
+	\label{fig:handle_map}
+\end{figure}
+
+\noindent
+Whenever an item is deleted from this array, it is swapped with the last element to fill the hole and decrease the collection's size by one. But without any further processing, all handles to the previous last element would now be invalid which would mitigate all benefits that collection comes with. So whenever internal reordering occurs it is the responsibility of a handle map, to somehow bend the previously returned handles to point to the new location of the item.
+
+For that situation the handle map contains a third array containing the reverse indexes from the dense array into the sparse array. So whenever an object is removed, the index of its handle data is looked up in that array. With that index the data related to the old handle can be accessed and the index into the dense array is overwritten by the new one. So the next time a user accesses the swapped value by its handle, the access into the sparse set will return the overwritten index, yielding the right item. With this process it is ensured that internally all elements are linear in memory while no handle is invalidated by the necessary reordering routine. 
+
+\begin{figure}[h!]
+	\centering \includegraphics[width=\linewidth]{PICs/handle_map_deletion.png}
+	\caption{Reordering routine triggered by the deletion of item three. Ensuring old handle integrity of item seven.}
+	\label{fig:handle_map_deletion}
+\end{figure}
+
+\newpage
+\noindent
+As it can be seen in Figure \ref{fig:handle_map_deletion}, when item three is deleted it is swapped with the last element in the dense array, being item seven in the graphic. As reaction to that situation several parts have to be updated, highlight purple in the above figure. To ensure every old handle to item seven stays valid, the previous handle data stored in the sparse array is looked up with the help of the reverse index lookup table. Then the index into the dense array stored along the received handle is bent to point to the location where item three was stored until now. The index in the reverse lookup array is also updated to signify that from now on the index two of the dense array is referred to by the handle data stored at index 6 in the sparse array. The last action that has to be taken is the increase of the generation of the handle data pointing to the removed item. So, if an old handle containing a sparse array index two and a generation lesser than one is passed to the map, an assertion signals that the value behind that handle is not valid anymore.\\
+
+\begin{lstlisting}[caption={Deletion of an item in the C++ implementation of the handle map}, label={lst:cpp_handle_map}, language={C++}]
+template <typename Item>
+void HandleMap<Item>::Erase(Handle handle)
+{
+	const InternalId internalId = pointerUtil::pseudo_cast<InternalId>(handle, 0);
+	
+	{
+		const bool userIndexInRange = internalId.sparseArrayIndex < m_itemCount;
+		assert(userIndexInRange && "Index of handle was out of range of the handle array");
+	}
+	
+	HandleData& handleData = m_handles[internalId.sparseArrayIndex];
+	
+	const bool validGeneration = internalId.generation == handleData.generation;
+	if (!validGeneration)
+	{
+		return;
+	}
+	
+	const uint32_t lastMeshIndex = m_itemCount - 1;
+	m_items[handleData.denseArrayIndex] = m_items[lastMeshIndex];
+	m_items[lastMeshIndex].~Item();
+	
+	const uint32_t indexOfMovedItem = m_meta[lastMeshIndex].denseToSparseIndex;
+	m_handles[indexOfMovedItem].denseArrayIndex = handleData.denseArrayIndex;
+	m_meta[handleData.denseArrayIndex].denseToSparseIndex = indexOfMovedItem;
+	
+	m_freeList.ReturnChunk(&m_handles[internalId.sparseArrayIndex]);
+	
+	++handleData.generation;
+	m_itemCount = lastMeshIndex;
+}
+\end{lstlisting}
+
+\noindent
+Additionally to Figure \ref{fig:handle_map_deletion}, Listing \ref{lst:cpp_handle_map} shows how that routine is implement in C++. The Rust implementation is rather similar to the shown function. The major difference is that the Rust implementation returns an \texttt{Option} wrapping a handle. That forces the programmer to check whether the returned handle is a valid one or none, whereas the C++ implementation returns an integer that has to be checker for validity due to previously defined rules how invalid state is communicated.
+
 \subsection{Ringbuffer}
-\blindtext
+
+The last collection in the contain library is called a \textit{Ringbuffer}. A ring or circular buffer is a data structure that uses an internal fixed-sized array and is able to wrap around if the writing index reaches array length. Such a buffer can either use single bytes as its elements, allowing the user to write arbitrary data, or use typed elements. The implemented variant uses fixed-size objects per ringbuffer. A common use case of that structure are producer-consumer queues where two threads, or routines in general, write and read from the same ringbuffer, using it to communicate and share data. The implemented solution contains the fixed-size array and two additional integers that hold the state of the current write and read index. Figure \ref{fig:ringbuffer} showcases the internal state of the ringbuffer in the most trivial way. The writ index is pointing to the next slot a value can be written to while the read index is indicating the next value to be read. If any index reaches the last element ad index six and wants to advance further, it wraps around starting at index zero again.
+
+\begin{figure}[h!]
+	\centering \includegraphics[width=\linewidth]{PICs/ringbuffer.png}
+	\caption{Illustration of the ringbuffer showing the two indexes and the important wrap around when the end is reached.}
+	\label{fig:ringbuffer}
+\end{figure}
+
+
+Due to the wrap around that happens as soon an index reaches the end of the array, writing to a ringbuffer can cause the oldest values contained to be overwritten. Some variants do not allow overwriting old values and yield an error or raise an exception in such a case. Both, the C++ and Rust implementation, allow for overwriting old values when the write index wraps. Another constraint the ringbuffer has to ensure is that the read index is not allowed to overtake the write index or otherwise it would read invalid or old data, running into undefined behavior in certain scenarios. The case of wrapping around is even more complicated when the buffer is used to store bytes and allow a user to insert arbitrary sized elements. It can happen that such an object is split up, having half of it stored at the end of the buffer while the other half is located at the beginning due to wrapping rules. If now the value is read again, the two parts have somehow be copied together to return the memory block previously written. One practice to simplify that case is to implement a technique known as a \textit{magic ringbuffer}. With the magical variant, the buffer is mapped to two adjacent virtual memory regions, allowing it to be read linearly and the only edge case occurs when the read pointer advances into the second virtual memory region. If that happens the read and write index is decreased by the buffer's length to be in the first sector again. Listing \ref{lst:ringbuffer_write} shows how the write function is implemented in the Rust ringbuffer and how the case of wrap around is handled.\\
+
+\begin{lstlisting}[caption={Write function of the Rust ringbuffer showing how the wrap around case is handled}, label={lst:ringbuffer_write}, language={C++}]
+pub fn write(&mut self, item: T) 
+{
+	self.empty = false;
+	
+	self.items[self.write_idx] = item;
+	self.write_idx = (self.write_idx + 1) % self.capacity;
+	
+	if self.write_idx == self.read_idx {
+		self.read_idx += 1;
+	}
+}
+\end{lstlisting}
+
+\noindent
+One big difference between the Rust and C++ implementation is how memory for the internal array is allocated. In the C++ version, which can be seen in Listing \ref{lst:cpp_ringbuffer_interface}, the internal array is allocated on the stack because the maximum capacity is passed to the template class as a non-type template parameter. With that design there are no dynamic memory allocations involved.  As it was previously mentioned in section \ref{rust_const_generics}, Rust currently has no concept of const generics, which makes it currently not possible to provide a similar interface in Rust. Due to that fact a vector has to be used that is then initialized with the maximum capacity passed at construction of the ringbuffer. This involves at least one dynamic memory allocation at runtime that could be omitted if it would be possible to use compile-time generic parameters to create arrays in Rust.\\
+
+\begin{lstlisting}[caption={Interface of the C++ Ringbuffer. Capacity is a non-type template parameter used to control the maximum element size.}, label={lst:cpp_ringbuffer_interface}, language={C++}]
+template <typename Item, size_t Capacity>
+class RingBuffer
+{
+	public:
+	RingBuffer();
+	
+	void Write(const Item& element);
+	void Write(const Item&& element);
+	
+	Item* Read(void);
+	Item* Peek(void);
+	void  Reset(void);
+	
+	bool IsEmpty(void) const { return m_isEmpty; }
+	bool IsFull(void)  const { return !IsEmpty(); }
+	
+	size_t Size(void) const;
+	
+	private:
+	bool m_isEmpty;
+	size_t m_writeIndex;
+	size_t m_readIndex;
+	Item m_items[Capacity];
+};
+\end{lstlisting}
 
 \section{Entity Component System} \label{ecs_impl}
-\blindtext
-\subsection{SPECS}
-\blindtext
+
+The last implemented system is an \ac{ECS}. Because the performance comparison between two languages is the main goal of this thesis the author reimplemented an already existing Rust \ac{ECS} in C++. The project that served as reference is called \textit{calx-ecs} and is a rather simple variant of an \ac{ECS}. This section will describe its \ac{API} and what parts are implemented differently in C++.
+
+\subsection{Calx ECS}
+
+\textit{Calx-ecs} was chosen due to its simple design which allows for a quick reimplementation in another language. The project is hosted at GitHub and can be found at \url{https://github.com/rsaarelm/calx-ecs}. Although there are more popular \ac{ECS} implementations in the Rust ecosystem, this one was chosen because a full reimplementation of a more complex one would have exceeded the available amount of time for that part of the thesis. \textit{Calx-ecs} features the following parts that are described by the following paragraphs:
+
+\begin{labeling}{component}
+	\item [world] responsible for entity creation and component storage
+	\item [entity] thin wrapper around two integers, an entity is only an id that groups components
+	\item [component] a type that can be added to an entity, defined by the user by deriving a
+	component interface (class in C++ / trait in Rust)
+\end{labeling}
+
 \subsection{Entities \& Components}
-\blindtext
+
+As already described in section \ref{ecs_theory} an \ac{ECS} is based upon composition instead of inheritance. While some variants implement an entity as a class containing a list of components, another one defines entities as simple ids that group components. The second approach is also the one that is used in this thesis. Every entity is a unique id stored in a 32-bit unsigned integer. Additionally to the id the \texttt{Entity} type also contains an index (also a 32-bit unsigned integer) that is used to describe where the entity is stored in the collection inside the \texttt{World} class. This allows the system to store a maximum of around 4 million entities.
+
+Beside the \texttt{Entity} the system allows a user to define custom components which can be added and removed to an entity. The original Rust implementation defined a \texttt{Component} trait that could be implemented by user-defined types. Each component, then has to be registered with the world and a \texttt{ComponentStorage} is created per registered type. This allows for storing components contiguous in memory by using a quite similar approach then the handle map introduced in section \ref{handle_map_impl}. Listing \ref{lst:ecs_comp_storage} shows the interface of the \texttt{ComponentStorage} that is responsible to insert and removed components and keep track of which entity owns them.\\
+
+\begin{lstlisting}[caption={ComponentStorage interface of the C++ implementation}, label={lst:ecs_comp_storage}, language={C++}]
+
+// DenseStorage is a contiguous vector of entitites and the components of type C
+template<typename Comp>
+struct DenseStorage
+{
+	std::vector<Comp> data;
+	std::vector<Entity> entities;
+};
+
+// Base class to allow storing differently typed storages in a polymorphic 
+// collection
+class Storage
+{
+	public:
+	virtual void remove(const Entity& entity) = 0;
+	virtual bool contains(const Entity& entity) = 0;
+	virtual ~Storage() = default;
+};
+
+// The templated ComponentStorage being specialized for every user-defined
+// component derived type
+template<typename Comp>
+class ComponentStorage : public Storage
+{
+	public:
+	void insert(const Entity& entity, Comp& comp);
+	void remove(const Entity& entity) override;
+	bool contains(const Entity& entity) override;
+	const std::vector<Entity>& entities(void) const;
+	Comp* get(const Entity& entity);
+	const Comp* get(const Entity& entity) const;
+	
+	private:
+	DenseStorage<Comp> m_innerStorage;
+	std::vector<Index> m_indexIntoInnerData;
+};
+\end{lstlisting}
+
+\noindent
+Due to the design of the \texttt{ComponentStorage} and the decision to use a distinct storage per component type, iterating over all components from one type is cache-friendly and yields good performance due to the linear memory layout. Because all storages and therefore all components are stored in the \texttt{World}, it is also the only way of retrieving references to single components or to query for entities owning a certain component. 
+
 \subsection{World}
-\blindtext
-\subsection{Systems}
-\blindtext
+ 
+ The \texttt{World} is the place of the \ac{ECS} where all entities and components are managed. It is responsible for creating new entities, registering component types and managing how they are stored internally. To allow the system to work with a variable amount of user-defined types, every new component type has to be registered before an instance can be inserted. In the Rust implementation this was done by a macro which implements the \texttt{Component} trait for every specified type and adds a property of a typed \texttt{ComponentStorage} to the world type. Listing \ref{lst:rust_register_comp} shows how the invocation of the macro looks like in Rust. Because of the macro's internals and how it defines the \texttt{ECS} type, the Rust system only allows for one world, containing fixed components, to exist.\\
+ 
+ \begin{lstlisting}[caption={Registering custom components with the Rust ECS}, label={lst:rust_register_comp}, language={C++}]
+ Ecs! {
+	 pos: Position,
+	 vel: Velocity,
+ }
+ \end{lstlisting}
+ 
+ \noindent
+ Contrary to the macro approach, the reimplementation in C++ did not adhere to this approach. This decision was made due to the very different macro system of the both languages. Rust's macros create an \ac{AST} the programmer can work with and already includes features to execute part of the macro for any amount of arguments passed. While this can also be done in C++ with variadic macros it is way harder and also not as flexible. With the C++ variadic macro approach it is not possible to support any amount of arguments but only the ones defined by the user. To mirror the behavior of the Rust crate,where any number of component types can be registered, the C++ implementation also wanted to supply that possibility. Listing \ref{lst:cpp_register_comp} shows how the registration process works. Whenever a new component is added to an entity, the world checks whether there already exists a corresponding storage and if it does not then a new one is created and stored in an internal hash map. The key for this map is the unique id of the component which has to be defined by the user whenever a new component subtype is created.\\
+ 
+ \begin{lstlisting}[caption={Method to add components, implicitly registering them on first use}, label={lst:cpp_register_comp}, language={C++}]
+ template <typename C>
+ void World::addComponent(const Entity& entity, C component)
+ {
+ 	const uint32_t componentId = C::UID();
+ 	if (m_componentStorages.count(componentId) == 0)
+ 	{
+ 		m_componentStorages.insert({ componentId, new ComponentStorage<C>() });
+ 	}
+ 	
+ 	ComponentStorage<C>* storage = static_cast<ComponentStorage<C>*>(m_componentStorages.at(componentId));
+ 	if (contains(entity))
+ 	{
+ 		storage->insert(entity, component);
+ 	}
+ }
+\end{lstlisting}
+ 
+\noindent
+The unique id of a component used to distinguish between them is requested from a static method the type \texttt{C} has to implement. An implementation of that method can look like this: \texttt{static uint32\_t UID() \{ return 1u; \}}. It is the user's responsibility to ensure that every id returned by \texttt{UID} is unique or the system will run into undefined behavior.
+
+\section{Conclusion}
+
+With all the systems implemented in two languages, the author wants to shortly summarize personal experiences and opinions about Rust and the implementations. Coming from the C++ world it was at first difficult to transfer the concepts and architectural choices for the systems to Rust. With the borrow checker complaining about lifetimes and more than one mutable reference to a value, it was challenging to refactor the Rust code to even compile. But after the first few pitfalls and due to the helpful and verbose compile errors of \textit{rustc}, the author adapted a more idiomatic style and the Rust implementations become robust. It was then quite the opposite that some of the features Rust provide were missing when a C++ implementation was reworked. While Rust offers types such as \texttt{Option} for describing the state of a return value, C++ sticks with pointers and using \texttt{nullptr} to indicate an error. It can be said, in the opinion of the author, that Rust served well as a language for implementing the modules and that the built-in test facilities of cargo were helpful.
+
+The next chapter will include the results of the performance measurements of the implemented systems. It will first describe the benchmark setup and what scenarios where chosen to compare the module to each other. After that the findings will be discussed and differences between the languages will be shown, supported by diagrams of the measurement data.
+
+

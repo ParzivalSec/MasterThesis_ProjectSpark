@@ -1,14 +1,102 @@
 % Result evaluation
 \chapter{Submodule benchmarks}
-\blindtext
+
+While the last chapter discussed the implementation details of the different modules, this chapter will present the results of the performance measurements. One of the key concerns for a game engine is performance and that is the reason why it is the computation time of several benchmark scenarios that is compared. The results and findings of the measurement process are then visualized to show where the performance of the implementations diverge and where they are on the same level. Starting with a description of the benchmark process and the environment, the first part will also list the scenarios that were measured. 
+
 \section{Benchmark setup}
-\blindtext
-\subsection{Cross-language benchmark process}
-\blindtext
+
+\subsection{Time measurement}
+
+Retrieving fine-grained and reliable timestamps is important when comparing different implementations against each other. To measure elapsed time the first naive solution would be to use a facility such as the \texttt{time()} function from the C standard library. But since \texttt{time()} only returns the elapsed seconds since the first January 1970, a more precise method is required. A possible solution can be a high-resolution timer on a CPU. Because this kind of timer uses a register to store the amount of cycles passed since the CPU was started, it is possible to generate more precise timestamps yielding better resolution of differences between them. The option chosen for measuring time on the Windows \ac{OS} is \texttt{QueryPerformanceCounter()} from the \textit{Win32 \ac{API}}.
+
 \subsection{Environments}
-\blindtext
+
+The benchmark process is run on two different hardware setups. The following tables describe the hardware on these machines and group them under a name per environment. The following sections will use these names to refer to the different environments.
+
+\begin{table}[h!]
+	\centering
+	\label{my-label}
+	\begin{tabular}{|l|l|l|}
+		\hline
+		\textbf{Environment name} & \textbf{Processor / CPU} & \textbf{RAM} \\ \hline
+		Mobile Workstation	& \textit{Processor	Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz, 4 Core(s)} & \textit{16 GB} \\ \hline
+		Workstation			& \textit{???} & \textit{???} \\ \hline
+	\end{tabular}
+	\caption{Benchmark environment names and hardware capabilities}
+\end{table}
+
+\subsection{Benchmark applications}
+
+To measure the different scenarios that are listed in the next section, every project includes an application that is able to run them. In order to yield minimal overhead when choosing benchmark scenarios every benchmark executable includes a static lookup table where the function pointers to the scenarios are stored. Each scenario has an id which also serves as an index into the lookup table. When the application is started the id is passed as a command-line parameter. This behavior was chosen to allow the author to automate the benchmark process via command-line scripts. Listing \ref{lst:cpp_bench_app} shows how the C++ main function of a benchmark application looks like. At the end it can be seen, that the scenario id passed as a command-line argument is converted into an integer and then used to index into the scenario table. The signature of every benchmark scenario has to follow the one defined as \texttt{typedef void(*BenchmarkScenarioFunction)();}. The Rust benchmark main function work similar to the C++ one.\\
+
+\begin{lstlisting}[caption={Main function of the C++ benchmark app using a scenario lookup table}, label={lst:cpp_bench_app}, language={C++}]
+int main(int argc, char** argv)
+{
+	if (argc <= 1 || argc > 2)
+	{
+		std::cerr << "Usage: bench_spark++.exe SCENARIO_ID" << std::endl;
+		return -1;
+	}
+	
+	scenarios[atoi(argv[1])]();
+}
+\end{lstlisting}
+
+
 \subsection{Scenarios}
-\blindtext
+
+To measure the performance of the different systems the following benchmark scenarios were implemented. 
+
+\subsubsection{Memory management}
+
+\begin{enumerate}
+	\item \textbf{RawAllocators}: one scenario was implemented per allocator to test raw allocations with the natural alignment of a common struct. Beside the custom allocators the measurement includes the default dynamic heap allocation systems from the two languages.
+	
+	\item \textbf{MemoryRealm\_LinearAllocator}: a scenario where 100 small object allocations are made via a memory realm. The realm includes a linear allocator and uses simple bounds checking.
+	
+	\item \textbf{MemoryRealm\_LinearAllocator\_Safe}: beside the raw allocations this scenario also requests 100 small objects but this time with the safety abstraction layer.
+\end{enumerate}
+
+\subsubsection{Container}
+
+\begin{enumerate}
+	\item \textbf{Vector\_Without\_Capacity}: push 1000 small objects into a vector with no previous capacity, forcing it to grow at least once. 
+	
+	\item \textbf{Vector\_With\_Capacity}: push 1000 small objects into a vector with previously requested capacity
+	
+	\item \textbf{Iterating\_Vector}: push 1000 small objects into a vector with previously requested capacity and iterate them afterwards 
+
+	\item \textbf{Erase\_Vector}: push 1000 small objects into a vector with previously requested capacity and erase them one by one afterwards
+	
+	\item \textbf{HandleMap\_Insertion}: insert 1000 small objects into the handle map
+	
+	\item \textbf{HandleMap\_Iteration}: insert 1000 small objects into the handle map and iterate them afterwards
+	
+	\item \textbf{HandleMap\_Remove}: insert 1000 small objects into the handle map and remove them afterwards one by one
+	
+	\item \textbf{Ringbuffer\_Write}: insert 1000 small objects into the ringbuffer until it is full
+
+	\item \textbf{Ringbuffer\_Read}: insert 1000 small objects into the ringbuffer and consume them all
+	
+	\item \textbf{Ringbuffer\_Write\_Wrapping}: insert 1500 objects into the ringbuffer overwriting the oldest 500	
+\end{enumerate}
+
+\subsubsection{Entity Component System}
+
+\begin{enumerate}
+	\item \textbf{1000\_Entities\_Pos}: create 1000 entities with a position component
+	\item \textbf{10000\_Entities\_Pos}: create 10000 entities with a position component
+	
+	\item \textbf{1000\_Entities\_Multiple\_Components}: create 1000 entities with four different components
+	\item \textbf{10000\_Entities\_Multiple\_Components}: create 10000 entities with four different components
+	
+	\item \textbf{Iterate\_1000\_Pos}: iterate over 1000 different position components
+	\item \textbf{Iterate\_10000\_Pos}: iterate over 10000 different position components
+	
+	\item \textbf{Remove\_500\_Pos}: create 1000 entities with position components and remove 500 components afterwards
+	\item \textbf{Remove\_5000\_Pos}: create 10000 entities with position components and remove 5000 components afterwards
+\end{enumerate}
+
 \section{Results}
 \blindtext
 \subsection{Memory Management}

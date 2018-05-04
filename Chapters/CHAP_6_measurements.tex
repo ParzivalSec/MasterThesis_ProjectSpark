@@ -52,9 +52,9 @@ To measure the performance of the different systems the following benchmark scen
 \begin{enumerate}
 	\item \textbf{RawAllocators}: one scenario was implemented per allocator to test raw allocations with the natural alignment of a common struct. Beside the custom allocators the measurement includes the default dynamic heap allocation systems from the two languages.
 	
-	\item \textbf{MemoryRealm\_LinearAllocator}: a scenario where 100 small object allocations are made via a memory realm. The realm includes a linear allocator and uses simple bounds checking.
+	\item \textbf{SafeAllocators}: one scenario was implemented per allocator to test safe allocations in Rust with the natural alignment of a common struct. It will serve as a comparison on how much the safe abstraction costs.
 	
-	\item \textbf{MemoryRealm\_LinearAllocator\_Safe}: beside the raw allocations this scenario also requests 100 small objects but this time with the safety abstraction layer.
+	\item \textbf{MemoryRealm\_LinearAllocator}: a scenario where 100 small object allocations are made via a memory realm. The realm includes a linear allocator and uses simple bounds checking.
 \end{enumerate}
 
 \subsubsection{Container}

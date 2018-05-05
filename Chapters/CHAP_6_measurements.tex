@@ -27,7 +27,7 @@ The benchmark process is run on two different hardware setups. The following tab
 
 \subsection{Benchmark applications}
 
-To measure the different scenarios that are listed in the next section, every project includes an application that is able to run them. In order to yield minimal overhead when choosing benchmark scenarios every benchmark executable includes a static lookup table where the function pointers to the scenarios are stored. Each scenario has an id which also serves as an index into the lookup table. When the application is started the id is passed as a command-line parameter. This behavior was chosen to allow the author to automate the benchmark process via command-line scripts. Listing \ref{lst:cpp_bench_app} shows how the C++ main function of a benchmark application looks like. At the end it can be seen, that the scenario id passed as a command-line argument is converted into an integer and then used to index into the scenario table. The signature of every benchmark scenario has to follow the one defined as \texttt{typedef void(*BenchmarkScenarioFunction)();}. The Rust benchmark main function work similar to the C++ one.\\
+To measure the different scenarios that are listed in the next section, every project includes an application that is able to run them. In order to yield minimal overhead when choosing benchmark scenarios every executable includes a static lookup table where the function pointers to the scenarios are stored. Each scenario has an id which also serves as an index into the lookup table. When the application is started the id is passed as a command-line parameter. This behavior was chosen to allow the author to automate the benchmark process via command-line scripts. Listing \ref{lst:cpp_bench_app} shows how the C++ main function of a benchmark application looks like. At the end it can be seen, that the scenario id passed as a command-line argument is converted into an integer and then used to index into the scenario table. The signature of every benchmark scenario has to follow the one defined as \texttt{typedef void(*BenchmarkScenarioFunction)();}. The Rust benchmark main function work similar to the C++ one.\\
 
 \begin{lstlisting}[caption={Main function of the C++ benchmark app using a scenario lookup table}, label={lst:cpp_bench_app}, language={C++}]
 int main(int argc, char** argv)
@@ -50,60 +50,175 @@ To measure the performance of the different systems the following benchmark scen
 \subsubsection{Memory management}
 
 \begin{enumerate}
-	\item \textbf{RawAllocators}: one scenario was implemented per allocator to test raw allocations with the natural alignment of a common struct. Beside the custom allocators the measurement includes the default dynamic heap allocation systems from the two languages.
+	\item \textbf{RawAllocators}: one scenario was implemented per allocator to test raw allocations with the natural alignment of a common struct. Every scenario allocates 1000 elements. Beside the custom allocators the measurement includes the default dynamic heap allocation systems from the two languages.
 	
-	\item \textbf{SafeAllocators}: one scenario was implemented per allocator to test safe allocations in Rust with the natural alignment of a common struct. It will serve as a comparison on how much the safe abstraction costs.
-	
-	\item \textbf{MemoryRealm\_LinearAllocator}: a scenario where 100 small object allocations are made via a memory realm. The realm includes a linear allocator and uses simple bounds checking.
+	\item \textbf{MemoryRealm\_LinearAllocator}: a scenario where 1000 small object allocations are made via a memory realm. The realm includes a linear allocator and uses simple bounds checking.
 \end{enumerate}
 
 \subsubsection{Container}
 
 \begin{enumerate}
-	\item \textbf{Vector\_Without\_Capacity}: push 1000 small objects into a vector with no previous capacity, forcing it to grow at least once. 
+	\item \textbf{VecDefault}: push 10000 small objects into a vector with no previous capacity, forcing it to grow at least once. 
 	
-	\item \textbf{Vector\_With\_Capacity}: push 1000 small objects into a vector with previously requested capacity
+	\item \textbf{VecCapacity}: push 10000 small objects into a vector with previously requested capacity
 	
-	\item \textbf{Iterating\_Vector}: push 1000 small objects into a vector with previously requested capacity and iterate them afterwards 
+	\item \textbf{VecIteration}: push 10000 small objects into a vector with previously requested capacity and iterate them afterwards 
 
-	\item \textbf{Erase\_Vector}: push 1000 small objects into a vector with previously requested capacity and erase them one by one afterwards
+	\item \textbf{VecErase}: push 10000 small objects into a vector with previously requested capacity and erase them one by one afterwards
 	
-	\item \textbf{HandleMap\_Insertion}: insert 1000 small objects into the handle map
+	\item \textbf{HandleMapInsertion}: insert 10000 small objects into the handle map
 	
-	\item \textbf{HandleMap\_Iteration}: insert 1000 small objects into the handle map and iterate them afterwards
+	\item \textbf{HandleMapIteration}: insert 10000 small objects into the handle map and iterate them afterwards
 	
-	\item \textbf{HandleMap\_Remove}: insert 1000 small objects into the handle map and remove them afterwards one by one
+	\item \textbf{HandleMapRemove}: insert 10000 small objects into the handle map and remove them afterwards one by one
 	
-	\item \textbf{Ringbuffer\_Write}: insert 1000 small objects into the ringbuffer until it is full
+	\item \textbf{RingbufferWrite}: insert 10000 small objects into the ringbuffer until it is full
 
-	\item \textbf{Ringbuffer\_Read}: insert 1000 small objects into the ringbuffer and consume them all
+	\item \textbf{RingbufferRead}: insert 10000 small objects into the ringbuffer and consume them all
 	
-	\item \textbf{Ringbuffer\_Write\_Wrapping}: insert 1500 objects into the ringbuffer overwriting the oldest 500	
+	\item \textbf{RingbufferWrite\_Wrapping}: insert 15000 objects into the ringbuffer overwriting the oldest 500	
 \end{enumerate}
 
 \subsubsection{Entity Component System}
 
 \begin{enumerate}
-	\item \textbf{1000\_Entities\_Pos}: create 1000 entities with a position component
-	\item \textbf{10000\_Entities\_Pos}: create 10000 entities with a position component
+	\item \textbf{Position}: create 10000 entities and add a position component to each of them
 	
-	\item \textbf{1000\_Entities\_Multiple\_Components}: create 1000 entities with four different components
-	\item \textbf{10000\_Entities\_Multiple\_Components}: create 10000 entities with four different components
+	\item \textbf{PositionVelocity}: create 10000 entities with one position and one velocity component
 	
-	\item \textbf{Iterate\_1000\_Pos}: iterate over 1000 different position components
-	\item \textbf{Iterate\_10000\_Pos}: iterate over 10000 different position components
+	\item \textbf{Iteration}: iterate over 10000 position components of previously created entities
 	
-	\item \textbf{Remove\_500\_Pos}: create 1000 entities with position components and remove 500 components afterwards
-	\item \textbf{Remove\_5000\_Pos}: create 10000 entities with position components and remove 5000 components afterwards
+	\item \textbf{Remove}: create 10000 entities with position components and remove 5000 components afterwards
 \end{enumerate}
 
+\clearpage
+
 \section{Results}
-\blindtext
+
 \subsection{Memory Management}
-\blindtext
+
+Considering the benchmarks shown in Figure \ref{fig:mem_bench_workstation} and Figure \ref{fig:mem_bench_blade} the C++ version of the memory system performs better than the Rust implementation. The execution times of the Rust allocators are slightly slower than the C++ one, but only differ in a range from 5 to 50 microseconds. The pool allocator on the mobile workstation and the linear memory realm on the razor blade stealth, outperform the C++ system but only by a few microseconds. 
+
+A baseline for the general performance of the allocator system is the first data-set in the graph that shows the execution time of the default allocators of the two languages. In C++ that facility was \texttt{new} while the Rust variant uses \texttt{Box} to dynamically allocate memory.
+
+\begin{figure}[h!]
+	\centering
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/mem_bench_workstation.png}
+		\caption{Visual comparison of the different allocators, in Rust and C++}
+		\label{fig:mem_bench_workstation} 
+	\end{subfigure}
+	
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/mem_bench_workstation_data.png}
+		\caption{Exact measurements of the benchmarks, in microseconds}
+		\label{fig:mem_bench_blade}
+	\end{subfigure}
+	
+	\caption[Memory benchmarks workstation]{Memory system benchmarks on the mobile workstation configuration}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[h!]
+	\centering
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/mem_bench_blade.png}
+		\caption{Visual comparison of the different allocators, in Rust and C++}
+		\label{fig:Ng1} 
+	\end{subfigure}
+	
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/mem_bench_blade_data.png}
+		\caption{Exact measurements of the benchmarks, in microseconds}
+		\label{fig:Ng2}
+	\end{subfigure}
+	
+	\caption[Memory benchmarks blade]{Memory system benchmarks on the razor blade stealth configuration}
+\end{figure}
+
+\clearpage
+
 \subsection{Container}
-\blindtext
+
+Based on the figures \ref{fig:cont_bench_work} \& \ref{fig:cont_bench_blade} the C++ version of the container library performs better than the Rust variant. The Rust vector is about 25\% to 30\% slower than the C++ version, mostly due to the way how the Rust vector writes the data into the internal array. It is first moved into the \texttt{push} method and then immediately written into a memory slot of the internal array while the C++ variant uses \texttt{placement new} to create a new instance of the object into vector's place. 
+The handlemap implementation yields better results in C++, with an average difference of about 35\% to 40\% percent. One difference that introduce a small overhead in the Rust handlemap is the way dynamic memory for the internal arrays is allocated. Because the implementation's goal was to use stable features where possible, the allocation library for raw memory could not be used. The idiomatic Rust way would then be to use a \texttt{Vec} to allocate the memory needed, but the author decided to use the virtual memory allocator already used for the allocators and the vector. 
+The last container, the ringbuffer, performs slightly better in Rust, but inly by a difference of four and seven microseconds in the performed scenarios. 
+
+\begin{figure}[h!]
+	\centering
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/container_bench_workstation.png}
+		\caption{Visual comparison of the different containers, in Rust and C++}
+		\label{fig:cont_bench_work} 
+	\end{subfigure}
+	
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/container_bench_workstation_data.png}
+		\caption{Exact measurements of the benchmarks, in microseconds}
+		\label{fig:cont_bench_blade}
+	\end{subfigure}
+	
+	\caption[Container benchmarks workstation]{Container benchmarks on the mobile workstation configuration}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[h!]
+	\centering
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/container_bench_blade.png}
+		\caption{Visual comparison of the different containers, in Rust and C++}
+		\label{fig:Ng1} 
+	\end{subfigure}
+	
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/container_bench_blade_data.png}
+		\caption{Exact measurements of the benchmarks, in microseconds}
+		\label{fig:Ng2}
+	\end{subfigure}
+	
+	\caption[Container benchmarks blade]{Container benchmarks on the razor blade stealth configuration}
+\end{figure}
+
+\clearpage
+
 \subsection{Entity Component System}
-\blindtext
-\section{Conclusion \& Discussion}
-\blindtext
+
+The results of the \ac{ECS} benchmark yielded the results that the Rust implementation,the calx-ecs crate, yields better performance as the reimplementation in C++. That difference is mostly due to the way the component storages were implemented in the Rust \ac{ECS} and how they work in the C++ variant. While in calx-ecs the creator provides a macro to register components with the \texttt{Ecs} type, for every type provided, the macro adds a field to the \texttt{Ecs} struct. Because the macros system of Rust differs from the preprocessor-based one in C++, the reimplementation used a different approach. Because with C++ macros, the flexibility and amount of types is constrained by the macro expansion rules (variadic macros need a distinct macro for every argument count to serve the same purpose), the C++ \ac{ECS} uses a hashmap that associates component storages with an unique component id. The lookup into that map to get the right storage for a component introduces an overhead that could be avoided in Rust. Figures \ref{fig;ecs_bench_work} and \ref{fig:ecs_bench_blade} show these results and the second scenario benchmark also visualizes how in C++ the performance impact scales directly with the amount of components added to an entity. 
+
+\begin{figure}[h!]
+	\centering
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/ecs_bench_workstation.png}
+		\caption{Visual comparison of the \ac{ECS} implementations, in Rust and C++}
+		\label{fig:ecs_bench_work} 
+	\end{subfigure}
+	
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/ecs_bench_workstation_data.png}
+		\caption{Exact measurements of the benchmarks, in microseconds}
+		\label{fig:ecs_bench_blade}
+	\end{subfigure}
+	
+	\caption[ECS benchmarks workstation]{\ac{ECS} benchmarks on the mobile workstation configuration}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[h!]
+	\centering
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/ecs_bench_workstation.png}
+		\caption{Visual comparison of the \ac{ECS} implementations, in Rust and C++}
+		\label{fig:Ng1} 
+	\end{subfigure}
+	
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{PICs/ecs_bench_workstation_data.png}
+		\caption{Exact measurements of the benchmarks, in microseconds}
+		\label{fig:Ng2}
+	\end{subfigure}
+	
+	\caption[ECS benchmarks blade]{\ac{ECS} benchmarks on the razor blade stealth configuration}
+\end{figure}

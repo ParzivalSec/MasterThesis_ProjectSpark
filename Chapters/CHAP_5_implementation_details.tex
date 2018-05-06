@@ -71,7 +71,14 @@ The design decisions for parts of the memory system are based on resources hoste
 \end{labeling}
 
 \subsection{Virtual memory}
-\blindtext
+
+Before the theory of the allocators are described it is necessary to introduce a concept that builds the foundation for all of them. Every allocator in the system is able to allocate blocks of memory it uses internally to fulfill user allocation requests. These blocks are not acquired via the default allocator. A virtual allocator is used that reserves and commits address space via the virtual memory system of the \ac{OS}. An \ac{OS} that support visualization of memory allows several processes to share physical memory while each process thinks, it is owner its own address space (mostly 32-bits or 64-bits). When a process writes or reads from an address of its address space (a virtual address), the \ac{OS} maps it to the real address in the physical memory space. This is done to ensure isolation between processes and protection of their respective memory areas.
+
+The functions to manage virtual memory on Windows are called \texttt{VirtualAlloc} and \texttt{VirtualFree}. An address space can be in several states but the two commonly used ones are \textit{reserved} and \textit{committed}. A user can reserve a range of addresses which tells the \ac{OS} that a certain amount of memory shall be ready whenever the user commits parts of the range. While reserved address space is not linked to any physical memory in that state, the memory usage of the application does not increase. As soon as memory pages, chunks in which the virtual memory system can allocate, are committed, physical memory is required for them and the memory usage increases. 
+
+All implemented allocators use this system to acquire their needed memory. Using the \ac{API} provided by Spark, it is also possible to rather quickly port the system to another platform by reimplementing the virtual memory functions. With these capabilities it is also possible to implement growing collections (growing pool allocator, vector) in an efficient manner that also ensures internal elements are contiguous in memory. \cite[p. 3-5]{VMEM}
+
+\clearpage
 
 \subsection{Allocators}
 

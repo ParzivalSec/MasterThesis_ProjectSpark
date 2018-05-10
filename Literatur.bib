@@ -19,16 +19,6 @@
 }
 
 %Buch
-@Book{GEG_3,
-  author    = {{Chapter-wise on usage}},
-  title     = {{Game Engine Gems 3}},
-  edition	= {4},
-  publisher = {CRC Press},
-  address   = {6000 Broken Sound Parkway NW},
-  year      = {2016},
-}
-
-%Buch
 @Book{ProRus,
   author    = {{Blandy, Jim}, {Orendorff, Jason}},
   title     = {{Programming Rust - Fast, Safe Systems Development}},
@@ -46,7 +36,6 @@
 	publisher = {OReilley},
 	address   = {},
 	year      = {2005},
-	url		  = {https://www.safaribooksonline.com/library/view/understanding-the-linux/0596005652/index.html}
 }
 
 @mastersthesis{Portisch17,
@@ -64,16 +53,16 @@
 	note			=	"[Online; accessed 22-04-2018, 21:59],
 	year			=	{2017}
 	url				=	{https://blog.rust-lang.org/2017/12/21/rust-in-2017.html},
-	howpublished	=	"\url{https://blog.rust-lang.org/2017/12/21/rust-in-2017.html}",
 }
 
 % Blog
 @misc{LLVM_ARCH,
-	title			=	{LLVM},
+	title			=	{The Architecture of Open Source Applications},
+	edition			= 	{2},
+	chapter			=	{LLVM},
 	author			=	{Chris Lattner}
 	note			=	"[Online; accessed 22-04-2018, 23:14],
 	url				=	{http://www.aosabook.org/en/llvm.html},
-	howpublished	=	"\url{http://www.aosabook.org/en/llvm.html}",
 }
 
 % Blog
@@ -82,7 +71,6 @@
 	author			= {Stefan Reinalter},
 	note			= "[Online; accessed 25-04-2018, 22:41]",
 	url				= {https://blog.molecular-matters.com/2011/07/05/memory-system-part-1/},
-	howpublished	= "\url{https://blog.molecular-matters.com/2011/07/05/memory-system-part-1/}",
 }
 
 % Blog
@@ -91,7 +79,6 @@
 	author			= {Stefan Reinalter},
 	note			= "[Online; accessed 25-04-2018, 22:41]",
 	url				= {https://blog.molecular-matters.com/2011/07/07/memory-system-part-2/},
-	howpublished	= "\url{https://blog.molecular-matters.com/2011/07/07/memory-system-part-2/}",
 }
 
 % Blog
@@ -100,7 +87,6 @@
 	author			= {Stefan Reinalter},
 	note			= "[Online; accessed 25-04-2018, 22:41]",
 	url				= {https://blog.molecular-matters.com/2011/07/08/memory-system-part-3/},
-	howpublished	= "\url{https://blog.molecular-matters.com/2011/07/08/memory-system-part-3/}",
 }
 
 % Blog
@@ -109,7 +95,6 @@
 	author			= {Stefan Reinalter},
 	note			= "[Online; accessed 25-04-2018, 22:41]",
 	url				= {https://blog.molecular-matters.com/2011/07/15/memory-system-part-4/},
-	howpublished	= "\url{https://blog.molecular-matters.com/2011/07/15/memory-system-part-4/}",
 }
 
 % Blog
@@ -118,7 +103,6 @@
 	author			= {Stefan Reinalter},
 	note			= "[Online; accessed 25-04-2018, 22:41]",
 	url				= {https://blog.molecular-matters.com/2011/08/03/memory-system-part-5/},
-	howpublished	= "\url{https://blog.molecular-matters.com/2011/08/03/memory-system-part-5/}",
 }
 
 % Book
@@ -129,7 +113,6 @@
 	note			= "[Online; accessed 06-05-2018, 22:41]",
 	edition	  		= {3},
 	url				= {http://pages.cs.wisc.edu/~remzi/OSTEP/vm-intro.pdf},
-	howpublished	= "\url{http://pages.cs.wisc.edu/~remzi/OSTEP/vm-intro.pdf}",
 }
 
 % Blog
@@ -138,17 +121,15 @@
 	author			= {Epic Inc.},
 	note			= "[Online; accessed 25-04-2018, 22:41]",
 	url				= {https://www.unrealengine.com/en-US/features},
-	howpublished	= "\url{https://www.unrealengine.com/en-US/features}",
 }
 
 @mastersthesis{Unity_His,
 	author 			= {John Haas},
 	title 			= {A History of the Unity Game Engine},
-	school 			= {WORCESTER POLYTECHNIC INSTITUTE},
+	school 			= {Worcester Polytechnic Institute},
 	language 		= {en},
 	note			= "[Online; accessed 25-04-2018, 23:12]",
 	url		= {https://web.wpi.edu/Pubs/E-project/Available/E-project-030614-143124/unrestricted/Haas_IQP_Final.pdf},
-	howpublished	= "\url{https://web.wpi.edu/Pubs/E-project/Available/E-project-030614-143124/unrestricted/Haas_IQP_Final.pdf}",
 }
 
 % Blog
@@ -157,7 +138,6 @@
 	author			= {Erik Lengyel},
 	note			= "[Online; accessed 26-04-2018, 18:25]",
 	url				= {http://tombstoneengine.com/},
-	howpublished	= "\url{http://tombstoneengine.com/}",
 }
 
 @book{Stroustrup2005,
@@ -179,13 +159,20 @@
 	title			= {OCaml},
 	note			= "[Online; accessed 28-04-2018, 20:25]",
 	url				= {https://ocaml.org/},
-	howpublished	= "\url{https://ocaml.org/}",
 }
 
 @misc{CppMove,
 	author = "cppreference.com",
 	year   = 2015,
 	title  = "{C++ Move Semantics}",
-	howpublished = "\url{http://en.cppreference.com/w/cpp/language/move_constructor}", 
+	url 	= {http://en.cppreference.com/w/cpp/language/move_constructor}, 
 	note   = "[Online; accessed 28-04-2018, 18:25]",
+}
+
+@misc{TypeInf,
+	author 			= {Michael I. Schwartzbach},
+	year   			= 1995,
+	title  			= {Polymorphic Type Inference},
+	url				= {http://cs.au.dk/~mis/typeinf.pdf}
+	note   			= "[Online; accessed 02-05-2018, 15:00]",
 }
